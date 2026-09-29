@@ -1,0 +1,1059 @@
+{
+  "capturedAt": "2026-09-27T03:08:30.124Z",
+  "runTag": "2026-09-27-yaoji-real-write-synthetic",
+  "platformFamily": "Custom ATS / Yaoji",
+  "mode": "REAL_WRITE_NO_SUBMIT",
+  "dataSource": "SYNTHETIC_PROFILE",
+  "url": "https://zhaopin.yaoji.cn/job/065bf5c4-c421-490e-9b9e-e337d9d6f75f",
+  "capturedJobbar": "姚记科技 · 游戏测试工程师-27届秋招",
+  "scanReadOnly": {
+    "scanMutatedDom": false,
+    "scanDiff": 0,
+    "controlsAtScan": 16,
+    "nonEmptyBeforeScan": 0,
+    "preExistingValueFields": []
+  },
+  "stats": {
+    "totalControls": 16,
+    "totalControlsBreakdown": {
+      "radio": 2,
+      "radioGroups": 1,
+      "checkbox": 0,
+      "file": 2,
+      "contenteditable": 0,
+      "form": 0
+    },
+    "semanticFields": 11,
+    "semanticGroundTruthControls": 13,
+    "detectedFields": 13,
+    "detectionRecall": 1,
+    "approvedFields": 11,
+    "excludedFields": 2,
+    "writtenFields": 11,
+    "immediateVerifiedWrites": 11,
+    "finalStableVerifiedWrites": 11,
+    "writeSuccessRate": 1,
+    "semanticCorrectFields": 11,
+    "semanticCorrectnessRate": 1,
+    "manualFields": 1,
+    "unsupportedFields": 2,
+    "unsupportedByDesignControls": 2,
+    "rejectedBySiteValidation": [
+      {
+        "idx": 10,
+        "label": "毕业年份 *",
+        "valid": false,
+        "stepMismatch": true,
+        "badInput": false,
+        "tooLong": false,
+        "patternMismatch": false
+      }
+    ],
+    "undetectedControls": 0,
+    "manualFallbackRate": 0.077,
+    "recoveryAttempts": 0,
+    "recoverySuccesses": 0,
+    "falseFillCount": 0,
+    "mismatchWrites": 0,
+    "revertedWrites": 0,
+    "neighborOverwrites": 0,
+    "duplicateWrites": 0,
+    "openQuestionWritten": false,
+    "radioDetected": true,
+    "radioWritten": false,
+    "manualReason": "unsupported_control",
+    "undoUsed": true,
+    "undoRestored": true,
+    "submitClicked": false,
+    "navigationsObserved": 2
+  },
+  "internEnd": {
+    "requested": 7,
+    "requestedShape": "nnnn.nn",
+    "actual": 7,
+    "actualShape": "nnnn.nn",
+    "sameValue": true,
+    "semanticEquivalent": true,
+    "formatNormalized": false
+  },
+  "mappingAudit": [
+    {
+      "fieldId": "basic.name",
+      "labelHit": "请输入姓名",
+      "found": true,
+      "riskOk": true
+    },
+    {
+      "fieldId": "basic.age",
+      "labelHit": "请输入年龄",
+      "found": true,
+      "riskOk": true
+    },
+    {
+      "fieldId": "basic.city",
+      "labelHit": "请输入当前所在城市",
+      "found": true,
+      "riskOk": true
+    },
+    {
+      "fieldId": "basic.phone",
+      "labelHit": "请输入手机号码",
+      "found": true,
+      "riskOk": true
+    },
+    {
+      "fieldId": "basic.email",
+      "labelHit": "请输入电子邮箱",
+      "found": true,
+      "riskOk": true
+    },
+    {
+      "fieldId": "education.school",
+      "labelHit": "请输入毕业院校",
+      "found": true,
+      "riskOk": true
+    },
+    {
+      "fieldId": "education.endDate",
+      "labelHit": "如 2022",
+      "found": true,
+      "riskOk": true
+    },
+    {
+      "fieldId": "education.major",
+      "labelHit": "请输入专业",
+      "found": true,
+      "riskOk": true
+    },
+    {
+      "fieldId": "internship.company",
+      "labelHit": "请输入公司名称",
+      "found": true,
+      "riskOk": true
+    },
+    {
+      "fieldId": "internship.startDate",
+      "labelHit": "如 2022-01",
+      "found": true,
+      "riskOk": true
+    },
+    {
+      "fieldId": "internship.endDate",
+      "labelHit": "如 2024-06，在职填“至今”",
+      "found": true,
+      "riskOk": true
+    }
+  ],
+  "previewCards": [
+    {
+      "label": "请输入姓名",
+      "fieldId": "basic.name",
+      "risk": "SAFE",
+      "source": "基础资料",
+      "status": "need-confirm",
+      "valueLen": 3,
+      "valueShape": "ccc",
+      "confirmChecked": false
+    },
+    {
+      "label": "请输入年龄",
+      "fieldId": "basic.age",
+      "risk": "SAFE",
+      "source": "基础资料",
+      "status": "need-confirm",
+      "valueLen": 2,
+      "valueShape": "aa",
+      "confirmChecked": false
+    },
+    {
+      "label": "请输入当前所在城市",
+      "fieldId": "basic.city",
+      "risk": "SAFE",
+      "source": "基础资料",
+      "status": "need-confirm",
+      "valueLen": 3,
+      "valueShape": "ccc",
+      "confirmChecked": false
+    },
+    {
+      "label": "请输入手机号码",
+      "fieldId": "basic.phone",
+      "risk": "SAFE",
+      "source": "基础资料",
+      "status": "need-confirm",
+      "valueLen": 11,
+      "valueShape": "aaaaaaaaaaa",
+      "confirmChecked": false
+    },
+    {
+      "label": "请输入电子邮箱",
+      "fieldId": "basic.email",
+      "risk": "SAFE",
+      "source": "基础资料",
+      "status": "need-confirm",
+      "valueLen": 23,
+      "valueShape": "aaaa.aaaaaa@aaaaaaa.aaa",
+      "confirmChecked": false
+    },
+    {
+      "label": "请输入毕业院校",
+      "fieldId": "education.school",
+      "risk": "SAFE",
+      "source": "",
+      "status": "need-confirm",
+      "valueLen": 6,
+      "valueShape": "cccccc",
+      "confirmChecked": false
+    },
+    {
+      "label": "如 2022",
+      "fieldId": "education.endDate",
+      "risk": "SAFE",
+      "source": "",
+      "status": "need-confirm",
+      "valueLen": 7,
+      "valueShape": "aaaa.aa",
+      "confirmChecked": false
+    },
+    {
+      "label": "请输入专业",
+      "fieldId": "education.major",
+      "risk": "SAFE",
+      "source": "",
+      "status": "need-confirm",
+      "valueLen": 4,
+      "valueShape": "cccc",
+      "confirmChecked": false
+    },
+    {
+      "label": "请输入公司名称",
+      "fieldId": "internship.company",
+      "risk": "SAFE",
+      "source": "",
+      "status": "need-confirm",
+      "valueLen": 8,
+      "valueShape": "cccccccc",
+      "confirmChecked": false
+    },
+    {
+      "label": "如 2022-01",
+      "fieldId": "internship.startDate",
+      "risk": "SAFE",
+      "source": "",
+      "status": "need-confirm",
+      "valueLen": 7,
+      "valueShape": "aaaa.aa",
+      "confirmChecked": false
+    },
+    {
+      "label": "如 2024-06，在职填“至今”",
+      "fieldId": "internship.endDate",
+      "risk": "SAFE",
+      "source": "",
+      "status": "need-confirm",
+      "valueLen": 7,
+      "valueShape": "aaaa.aa",
+      "confirmChecked": false
+    },
+    {
+      "label": "是",
+      "fieldId": "unknown",
+      "risk": "MANUAL_ONLY",
+      "source": "",
+      "status": "unsupported",
+      "valueLen": 0,
+      "valueShape": "",
+      "confirmChecked": null
+    },
+    {
+      "label": "请简述主要工作内容和职责",
+      "fieldId": "",
+      "risk": "REVIEW",
+      "source": "",
+      "status": "",
+      "valueLen": 0,
+      "valueShape": "",
+      "confirmChecked": null
+    }
+  ],
+  "writeAudit": [
+    {
+      "stage": "T2-stable",
+      "fieldId": "basic.name",
+      "domLabel": "姓名 *",
+      "requestedLength": 3,
+      "actualLength": 3,
+      "requestedShape": "ccc",
+      "actualShape": "ccc",
+      "exactValueMatch": true,
+      "semanticEquivalent": true,
+      "formatNormalized": false,
+      "duplicateWrite": false,
+      "writeStatus": "success",
+      "semanticCorrect": true,
+      "immediateVerified": true,
+      "finalStableVerified": true,
+      "reverted": false,
+      "recoveryUsed": false,
+      "recoverySuccess": false,
+      "requestedValueHash": "4b23061da2d4"
+    },
+    {
+      "stage": "T2-stable",
+      "fieldId": "basic.age",
+      "domLabel": "年龄 *",
+      "requestedLength": 2,
+      "actualLength": 2,
+      "requestedShape": "nn",
+      "actualShape": "nn",
+      "exactValueMatch": true,
+      "semanticEquivalent": true,
+      "formatNormalized": false,
+      "duplicateWrite": false,
+      "writeStatus": "success",
+      "semanticCorrect": true,
+      "immediateVerified": true,
+      "finalStableVerified": true,
+      "reverted": false,
+      "recoveryUsed": false,
+      "recoverySuccess": false,
+      "requestedValueHash": "785f3ec7eb32"
+    },
+    {
+      "stage": "T2-stable",
+      "fieldId": "basic.city",
+      "domLabel": "当前所在城市 *",
+      "requestedLength": 3,
+      "actualLength": 3,
+      "requestedShape": "ccc",
+      "actualShape": "ccc",
+      "exactValueMatch": true,
+      "semanticEquivalent": true,
+      "formatNormalized": false,
+      "duplicateWrite": false,
+      "writeStatus": "success",
+      "semanticCorrect": true,
+      "immediateVerified": true,
+      "finalStableVerified": true,
+      "reverted": false,
+      "recoveryUsed": false,
+      "recoverySuccess": false,
+      "requestedValueHash": "7d76a7988494"
+    },
+    {
+      "stage": "T2-stable",
+      "fieldId": "basic.phone",
+      "domLabel": "手机号码 *",
+      "requestedLength": 11,
+      "actualLength": 11,
+      "requestedShape": "nnnnnnnnnnn",
+      "actualShape": "nnnnnnnnnnn",
+      "exactValueMatch": true,
+      "semanticEquivalent": true,
+      "formatNormalized": false,
+      "duplicateWrite": false,
+      "writeStatus": "success",
+      "semanticCorrect": true,
+      "immediateVerified": true,
+      "finalStableVerified": true,
+      "reverted": false,
+      "recoveryUsed": false,
+      "recoverySuccess": false,
+      "requestedValueHash": "3c31bd281466"
+    },
+    {
+      "stage": "T2-stable",
+      "fieldId": "basic.email",
+      "domLabel": "电子邮箱 *",
+      "requestedLength": 23,
+      "actualLength": 23,
+      "requestedShape": "aaaa.aaaaaa@aaaaaaa.aaa",
+      "actualShape": "aaaa.aaaaaa@aaaaaaa.aaa",
+      "exactValueMatch": true,
+      "semanticEquivalent": true,
+      "formatNormalized": false,
+      "duplicateWrite": false,
+      "writeStatus": "success",
+      "semanticCorrect": true,
+      "immediateVerified": true,
+      "finalStableVerified": true,
+      "reverted": false,
+      "recoveryUsed": false,
+      "recoverySuccess": false,
+      "requestedValueHash": "33d78d3aa973"
+    },
+    {
+      "stage": "T2-stable",
+      "fieldId": "education.school",
+      "domLabel": "毕业院校 *",
+      "requestedLength": 6,
+      "actualLength": 6,
+      "requestedShape": "cccccc",
+      "actualShape": "cccccc",
+      "exactValueMatch": true,
+      "semanticEquivalent": true,
+      "formatNormalized": false,
+      "duplicateWrite": false,
+      "writeStatus": "success",
+      "semanticCorrect": true,
+      "immediateVerified": true,
+      "finalStableVerified": true,
+      "reverted": false,
+      "recoveryUsed": false,
+      "recoverySuccess": false,
+      "requestedValueHash": "2da0fdb841b9"
+    },
+    {
+      "stage": "T2-stable",
+      "fieldId": "education.major",
+      "domLabel": "专业 *",
+      "requestedLength": 4,
+      "actualLength": 4,
+      "requestedShape": "cccc",
+      "actualShape": "cccc",
+      "exactValueMatch": true,
+      "semanticEquivalent": true,
+      "formatNormalized": false,
+      "duplicateWrite": false,
+      "writeStatus": "success",
+      "semanticCorrect": true,
+      "immediateVerified": true,
+      "finalStableVerified": true,
+      "reverted": false,
+      "recoveryUsed": false,
+      "recoverySuccess": false,
+      "requestedValueHash": "51b13b0a5bdb"
+    },
+    {
+      "stage": "T2-stable",
+      "fieldId": "education.endDate",
+      "domLabel": "毕业年份 *",
+      "requestedLength": 7,
+      "actualLength": 7,
+      "requestedShape": "nnnn.nn",
+      "actualShape": "nnnn.nn",
+      "exactValueMatch": true,
+      "semanticEquivalent": true,
+      "formatNormalized": false,
+      "duplicateWrite": false,
+      "writeStatus": "success",
+      "semanticCorrect": true,
+      "immediateVerified": true,
+      "finalStableVerified": true,
+      "reverted": false,
+      "recoveryUsed": false,
+      "recoverySuccess": false,
+      "requestedValueHash": "cd5d4f1548b0"
+    },
+    {
+      "stage": "T2-stable",
+      "fieldId": "internship.company",
+      "domLabel": "公司名称",
+      "requestedLength": 8,
+      "actualLength": 8,
+      "requestedShape": "cccccccc",
+      "actualShape": "cccccccc",
+      "exactValueMatch": true,
+      "semanticEquivalent": true,
+      "formatNormalized": false,
+      "duplicateWrite": false,
+      "writeStatus": "success",
+      "semanticCorrect": true,
+      "immediateVerified": true,
+      "finalStableVerified": true,
+      "reverted": false,
+      "recoveryUsed": false,
+      "recoverySuccess": false,
+      "requestedValueHash": "bbe8579ba70b"
+    },
+    {
+      "stage": "T2-stable",
+      "fieldId": "internship.startDate",
+      "domLabel": "入职时间",
+      "requestedLength": 7,
+      "actualLength": 7,
+      "requestedShape": "nnnn.nn",
+      "actualShape": "nnnn.nn",
+      "exactValueMatch": true,
+      "semanticEquivalent": true,
+      "formatNormalized": false,
+      "duplicateWrite": false,
+      "writeStatus": "success",
+      "semanticCorrect": true,
+      "immediateVerified": true,
+      "finalStableVerified": true,
+      "reverted": false,
+      "recoveryUsed": false,
+      "recoverySuccess": false,
+      "requestedValueHash": "66642c1ed7da"
+    },
+    {
+      "stage": "T2-stable",
+      "fieldId": "internship.endDate",
+      "domLabel": "离职时间",
+      "requestedLength": 7,
+      "actualLength": 7,
+      "requestedShape": "nnnn.nn",
+      "actualShape": "nnnn.nn",
+      "exactValueMatch": true,
+      "semanticEquivalent": true,
+      "formatNormalized": false,
+      "duplicateWrite": false,
+      "writeStatus": "success",
+      "semanticCorrect": true,
+      "immediateVerified": true,
+      "finalStableVerified": true,
+      "reverted": false,
+      "recoveryUsed": false,
+      "recoverySuccess": false,
+      "requestedValueHash": "fbcced93ebe0"
+    }
+  ],
+  "filledControls": {
+    "T1immediate": [
+      {
+        "stage": "T1-immediate",
+        "idx": 2,
+        "label": "姓名 *",
+        "placeholder": "请输入姓名",
+        "len": 3,
+        "shape": "ccc",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "basic.name"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T1-immediate",
+        "idx": 3,
+        "label": "年龄 *",
+        "placeholder": "请输入年龄",
+        "len": 2,
+        "shape": "nn",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "basic.age"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T1-immediate",
+        "idx": 4,
+        "label": "当前所在城市 *",
+        "placeholder": "请输入当前所在城市",
+        "len": 3,
+        "shape": "ccc",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "basic.city"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T1-immediate",
+        "idx": 7,
+        "label": "手机号码 *",
+        "placeholder": "请输入手机号码",
+        "len": 11,
+        "shape": "nnnnnnnnnnn",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "basic.phone"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T1-immediate",
+        "idx": 8,
+        "label": "电子邮箱 *",
+        "placeholder": "请输入电子邮箱",
+        "len": 23,
+        "shape": "aaaa.aaaaaa@aaaaaaa.aaa",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "basic.email"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T1-immediate",
+        "idx": 9,
+        "label": "毕业院校 *",
+        "placeholder": "请输入毕业院校",
+        "len": 6,
+        "shape": "cccccc",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "education.school"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T1-immediate",
+        "idx": 10,
+        "label": "毕业年份 *",
+        "placeholder": "如 2022",
+        "len": 7,
+        "shape": "nnnn.nn",
+        "siteValidity": {
+          "valid": false,
+          "stepMismatch": true,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "education.endDate"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T1-immediate",
+        "idx": 11,
+        "label": "专业 *",
+        "placeholder": "请输入专业",
+        "len": 4,
+        "shape": "cccc",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "education.major"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T1-immediate",
+        "idx": 12,
+        "label": "公司名称",
+        "placeholder": "请输入公司名称",
+        "len": 8,
+        "shape": "cccccccc",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "internship.company"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T1-immediate",
+        "idx": 13,
+        "label": "入职时间",
+        "placeholder": "如 2022-01",
+        "len": 7,
+        "shape": "nnnn.nn",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "internship.startDate"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T1-immediate",
+        "idx": 14,
+        "label": "离职时间",
+        "placeholder": "如 2024-06，在职填“至今”",
+        "len": 7,
+        "shape": "nnnn.nn",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "internship.endDate"
+        ],
+        "digitsOnlyFieldIds": []
+      }
+    ],
+    "T2stable": [
+      {
+        "stage": "T2-stable",
+        "idx": 2,
+        "label": "姓名 *",
+        "placeholder": "请输入姓名",
+        "len": 3,
+        "shape": "ccc",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "basic.name"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T2-stable",
+        "idx": 3,
+        "label": "年龄 *",
+        "placeholder": "请输入年龄",
+        "len": 2,
+        "shape": "nn",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "basic.age"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T2-stable",
+        "idx": 4,
+        "label": "当前所在城市 *",
+        "placeholder": "请输入当前所在城市",
+        "len": 3,
+        "shape": "ccc",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "basic.city"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T2-stable",
+        "idx": 7,
+        "label": "手机号码 *",
+        "placeholder": "请输入手机号码",
+        "len": 11,
+        "shape": "nnnnnnnnnnn",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "basic.phone"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T2-stable",
+        "idx": 8,
+        "label": "电子邮箱 *",
+        "placeholder": "请输入电子邮箱",
+        "len": 23,
+        "shape": "aaaa.aaaaaa@aaaaaaa.aaa",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "basic.email"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T2-stable",
+        "idx": 9,
+        "label": "毕业院校 *",
+        "placeholder": "请输入毕业院校",
+        "len": 6,
+        "shape": "cccccc",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "education.school"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T2-stable",
+        "idx": 10,
+        "label": "毕业年份 *",
+        "placeholder": "如 2022",
+        "len": 7,
+        "shape": "nnnn.nn",
+        "siteValidity": {
+          "valid": false,
+          "stepMismatch": true,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "education.endDate"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T2-stable",
+        "idx": 11,
+        "label": "专业 *",
+        "placeholder": "请输入专业",
+        "len": 4,
+        "shape": "cccc",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "education.major"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T2-stable",
+        "idx": 12,
+        "label": "公司名称",
+        "placeholder": "请输入公司名称",
+        "len": 8,
+        "shape": "cccccccc",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "internship.company"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T2-stable",
+        "idx": 13,
+        "label": "入职时间",
+        "placeholder": "如 2022-01",
+        "len": 7,
+        "shape": "nnnn.nn",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "internship.startDate"
+        ],
+        "digitsOnlyFieldIds": []
+      },
+      {
+        "stage": "T2-stable",
+        "idx": 14,
+        "label": "离职时间",
+        "placeholder": "如 2024-06，在职填“至今”",
+        "len": 7,
+        "shape": "nnnn.nn",
+        "siteValidity": {
+          "valid": true,
+          "stepMismatch": false,
+          "badInput": false,
+          "tooLong": false,
+          "patternMismatch": false
+        },
+        "matchedFieldIds": [
+          "internship.endDate"
+        ],
+        "digitsOnlyFieldIds": []
+      }
+    ]
+  },
+  "planRows": [
+    {
+      "fieldId": "basic.name",
+      "risk": "SAFE",
+      "status": "need-confirm",
+      "valueLen": 3,
+      "uiChecked": false,
+      "inPlan": true
+    },
+    {
+      "fieldId": "basic.age",
+      "risk": "SAFE",
+      "status": "need-confirm",
+      "valueLen": 2,
+      "uiChecked": false,
+      "inPlan": true
+    },
+    {
+      "fieldId": "basic.city",
+      "risk": "SAFE",
+      "status": "need-confirm",
+      "valueLen": 3,
+      "uiChecked": false,
+      "inPlan": true
+    },
+    {
+      "fieldId": "basic.phone",
+      "risk": "SAFE",
+      "status": "need-confirm",
+      "valueLen": 11,
+      "uiChecked": false,
+      "inPlan": true
+    },
+    {
+      "fieldId": "basic.email",
+      "risk": "SAFE",
+      "status": "need-confirm",
+      "valueLen": 23,
+      "uiChecked": false,
+      "inPlan": true
+    },
+    {
+      "fieldId": "education.school",
+      "risk": "SAFE",
+      "status": "need-confirm",
+      "valueLen": 6,
+      "uiChecked": false,
+      "inPlan": true
+    },
+    {
+      "fieldId": "education.endDate",
+      "risk": "SAFE",
+      "status": "need-confirm",
+      "valueLen": 7,
+      "uiChecked": false,
+      "inPlan": true
+    },
+    {
+      "fieldId": "education.major",
+      "risk": "SAFE",
+      "status": "need-confirm",
+      "valueLen": 4,
+      "uiChecked": false,
+      "inPlan": true
+    },
+    {
+      "fieldId": "internship.company",
+      "risk": "SAFE",
+      "status": "need-confirm",
+      "valueLen": 8,
+      "uiChecked": false,
+      "inPlan": true
+    },
+    {
+      "fieldId": "internship.startDate",
+      "risk": "SAFE",
+      "status": "need-confirm",
+      "valueLen": 7,
+      "uiChecked": false,
+      "inPlan": true
+    },
+    {
+      "fieldId": "internship.endDate",
+      "risk": "SAFE",
+      "status": "need-confirm",
+      "valueLen": 7,
+      "uiChecked": false,
+      "inPlan": true
+    },
+    {
+      "fieldId": "unknown",
+      "risk": "MANUAL_ONLY",
+      "status": "unsupported",
+      "valueLen": 0,
+      "uiChecked": false,
+      "inPlan": false
+    },
+    {
+      "fieldId": "",
+      "risk": "REVIEW",
+      "status": "",
+      "valueLen": 0,
+      "uiChecked": false,
+      "inPlan": false
+    }
+  ],
+  "duplicateWriteControls": [],
+  "radioState": {
+    "radioCount": 2,
+    "checkedCount": 0
+  },
+  "openQuestionState": [
+    {
+      "label": "工作内容描述",
+      "len": 0
+    }
+  ],
+  "notes": [
+    "§十四 选项 A：开放题（工作内容 REVIEW）本轮不写入，单独统计 openQuestionWritten",
+    "§十三：radio 保持 MANUAL ONLY，未被触碰",
+    "值正文全程不外流：跨进程只回传 len/shape/exact 布尔，报告落 requestedValueHash 而非正文（§十五/§二十九）",
+    "含填写值截图落 real-validation-results/private/（gitignored），入库仅 preview.png（§三十）"
+  ]
+}

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>校招网申 - 现代 ATS 模拟</title>
+  <style>
+    /* 真实站点的弹层默认不挂在 DOM 里；这里用 display:none 模拟「点击后才出现」 */
+    .select-dropdown { display: none; }
+    .select-dropdown.is-open { display: block; }
+  </style>
+</head>
+<body>
+  <nav id="site-nav">
+    <label for="job-search">搜索职位</label>
+    <input type="text" id="job-search" name="job-search" placeholder="请输入职位关键词">
+  </nav>
+
+  <h1>校园招聘申请表</h1>
+
+  <section id="basic-section">
+    <h2>基本信息</h2>
+    <div class="row"><label for="f-name">姓名</label><input type="text" id="f-name"></div>
+    <div class="row"><label for="f-phone">手机号</label><input type="tel" id="f-phone"></div>
+    <div class="row"><label for="f-email">电子邮箱</label><input type="email" id="f-email"></div>
+
+    <div class="row" id="gender-row">
+      <span class="label">性别</span>
+      <label><input type="radio" name="gender" value="male">男</label>
+      <label><input type="radio" name="gender" value="female">女</label>
+    </div>
+
+    <div class="row"><label for="f-id">身份证号</label><input type="text" id="f-id"></div>
+    <div class="row"><label for="f-city">所在城市</label><input type="text" id="f-city"></div>
+
+    <div class="row">
+      <span class="label">期望工作城市</span>
+      <div class="ant-select" id="city-select">
+        <div class="ant-select-selector">
+          <input type="text" id="f-expected-city" readonly autocomplete="off">
+          <span class="ant-select-selection-item"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="label">毕业时间</span>
+      <div class="el-date-editor el-date-editor--month" id="grad-picker">
+        <input type="text" id="f-grad" readonly placeholder="请选择">
+      </div>
+    </div>
+
+    <div class="row" id="lang-row">
+      <span class="label">语言能力</span>
+      <label><input type="checkbox" name="lang" value="cet4">英语CET-4</label>
+      <label><input type="checkbox" name="lang" value="cet6">英语CET-6</label>
+      <label><input type="checkbox" name="lang" value="toefl">托福</label>
+    </div>
+  </section>
+
+  <section id="edu-section">
+    <h2>教育背景</h2>
+    <div class="row"><label for="f-school">毕业院校</label><input type="text" id="f-school"></div>
+    <div class="row"><label for="f-major">专业</label><input type="text" id="f-major"></div>
+    <div class="row">
+      <span class="label">最高学历</span>
+      <div class="form-control">
+        <input type="text" id="f-degree" readonly placeholder="请选择">
+        <div class="select-dropdown">
+          <div role="option">大专</div>
+          <div role="option">本科</div>
+          <div role="option">硕士</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="intern-section">
+    <h2>实习经历</h2>
+    <div class="entry" data-entry="0">
+      <div class="row"><div class="label">公司名称</div><input type="text" class="f-company"></div>
+      <div class="row"><div class="label">职位名称</div><input type="text" class="f-position"></div>
+    </div>
+    <div class="entry" data-entry="1">
+      <div class="row"><div class="label">公司名称</div><input type="text" class="f-company"></div>
+      <div class="row"><div class="label">职位名称</div><input type="text" class="f-position"></div>
+    </div>
+  </section>
+
+  <section id="content-section">
+    <h2>其他信息</h2>
+    <div class="row">
+      <label for="f-selfeval">自我评价</label>
+      <div id="f-selfeval" contenteditable="true" style="min-height:60px"></div>
+    </div>
+    <div class="row"><label for="f-advantage">个人优势</label><textarea id="f-advantage" maxlength="120"></textarea></div>
+    <div class="row"><label for="f-available">到岗时间</label><input type="text" id="f-available"></div>
+
+    <div class="row"><label for="f-declare">本人承诺以上信息真实有效</label><input type="text" id="f-declare"></div>
+    <div class="row" id="transfer-row">
+      <span class="label">是否接受岗位调剂</span>
+      <label><input type="radio" name="transfer" value="yes">是</label>
+      <label><input type="radio" name="transfer" value="no">否</label>
+    </div>
+    <div class="row"><label for="f-sign">电子签名</label><input type="text" id="f-sign"></div>
+  </section>
+
+  <section id="external-section">
+    <h2>补充信息（跨域框架）</h2>
+    <iframe id="ext-frame" src="http://localhost:4198/frame-form.html" width="520" height="180" title="补充信息"></iframe>
+  </section>
+
+  <button type="button" id="submit-btn">提交申请（本测试不会点击）</button>
+
+  <script>
+    // 提交按钮被点过的话留痕：E2E 断言扩展从未点击提交
+    document.getElementById("submit-btn").addEventListener("click", function () {
+      this.setAttribute("data-clicked", "1");
+    });
+  </script>
+
+  <script>
+    // Ant Design 风格：点击触发器之后，弹层在下一个宏任务才挂到 body，
+    // 选中值也是异步回显到兄弟节点（input.value 始终为空）。
+    (function () {
+      const selector = document.querySelector("#city-select .ant-select-selector");
+      const display = document.querySelector("#city-select .ant-select-selection-item");
+      selector.addEventListener("click", function () {
+        setTimeout(function () {
+          const old = document.querySelector("#city-dropdown");
+          if (old) old.remove();
+          const panel = document.createElement("div");
+          panel.id = "city-dropdown";
+          panel.className = "ant-select-dropdown";
+          ["杭州", "上海", "北京", "深圳"].forEach(function (city) {
+            const item = document.createElement("div");
+            item.className = "ant-select-item ant-select-item-option";
+            item.textContent = city;
+            item.addEventListener("click", function () {
+              setTimeout(function () {
+                panel.remove();
+                display.textContent = city;
+                display.setAttribute("title", city);
+              }, 40);
+            });
+            panel.appendChild(item);
+          });
+          document.body.appendChild(panel);
+        }, 60);
+      });
+    })();
+
+    // Element 风格月份选择器：readonly input + 点击后弹出的日历面板
+    (function () {
+      const wrap = document.getElementById("grad-picker");
+      const input = document.getElementById("f-grad");
+      wrap.addEventListener("click", function () {
+        setTimeout(function () {
+          const old = document.querySelector("#grad-panel");
+          if (old) old.remove();
+          const panel = document.createElement("div");
+          panel.id = "grad-panel";
+          panel.className = "el-picker-panel";
+          ["2026-06", "2027-06", "2028-06"].forEach(function (ym) {
+            const cell = document.createElement("div");
+            cell.setAttribute("role", "gridcell");
+            cell.setAttribute("data-date", ym);
+            cell.textContent = ym.replace("-", "年") + "月";
+            cell.addEventListener("click", function () {
+              setTimeout(function () {
+                panel.remove();
+                input.value = ym;
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+              }, 40);
+            });
+            panel.appendChild(cell);
+          });
+          document.body.appendChild(panel);
+        }, 60);
+      });
+    })();
+
+    // 北森式只读下拉：点输入框才展示选项，点选项后把值写回 input
+    (function () {
+      const input = document.getElementById("f-degree");
+      const dropdown = document.querySelector(".select-dropdown");
+      input.addEventListener("click", function () {
+        dropdown.classList.toggle("is-open", !dropdown.classList.contains("is-open"));
+      });
+      document.querySelectorAll(".select-dropdown [role=option]").forEach(function (opt) {
+        opt.addEventListener("click", function () {
+          input.value = opt.textContent;
+          dropdown.classList.remove("is-open");
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

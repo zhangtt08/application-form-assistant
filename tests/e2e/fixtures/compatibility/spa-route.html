@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8"><title>SPA Route Mock</title></head>
+<body>
+<h1>职位详情</h1>
+<div id="view-detail"><p>这是职位详情页。</p></div>
+<div id="view-form" style="display:none">
+  <form>
+    <label for="spa-name">姓名</label>
+    <input id="spa-name" name="name" type="text">
+    <label for="spa-school">学校</label>
+    <input id="spa-school" name="school" type="text">
+  </form>
+</div>
+<button id="go-form">进入申请表</button>
+<script>
+document.getElementById("go-form").addEventListener("click", function () {
+  history.pushState({}, "", "/apply");
+  document.getElementById("view-detail").style.display = "none";
+  document.getElementById("view-form").style.display = "";
+});
+</script>
+</body></html>

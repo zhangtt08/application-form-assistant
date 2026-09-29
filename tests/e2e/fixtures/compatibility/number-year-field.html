@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8"><title>Number Year Field</title></head>
+<body>
+<!--
+  issue-003 回归样本：复刻姚记 ATS 的「毕业年份」结构。
+  值语义完全正确（2027.06 确实是毕业时间），但目标控件是 input[type=number] 且默认 step=1，
+  页面自身的约束校验会判 stepMismatch —— 写进去等于交出一个无效表单。
+  期望：该字段降为 manual（不进 ConfirmedFillPlan），同页其他控件不受牵连。
+-->
+<h1>游戏测试工程师-27届秋招 · 投递简历</h1>
+<form>
+  <label for="ny-name">姓名</label>
+  <input id="ny-name" type="text" placeholder="请输入姓名">
+
+  <label for="ny-age">年龄</label>
+  <input id="ny-age" type="number" placeholder="请输入年龄">
+
+  <label for="ny-school">毕业院校</label>
+  <input id="ny-school" type="text" placeholder="请输入毕业院校">
+
+  <label for="ny-year">毕业年份</label>
+  <input id="ny-year" type="number" placeholder="如 2022">
+
+  <label for="ny-major">专业</label>
+  <input id="ny-major" type="text" placeholder="请输入专业">
+</form>
+</body></html>

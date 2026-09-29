@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>模拟网申页面 - Application Form Assistant 测试 Fixture</title>
+    <style>
+      body { font-family: "Segoe UI", system-ui, sans-serif; max-width: 640px; margin: 40px auto; color: #1f2328; }
+      h2 { border-bottom: 1px solid #e3e6ea; padding-bottom: 6px; margin-top: 32px; }
+      .row { margin: 12px 0; }
+      label { display: inline-block; width: 140px; }
+      input[type="text"], input[type="email"], input[type="tel"], textarea, select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; width: 320px; }
+      .submit-area { margin-top: 32px; }
+      .submit-area button { padding: 10px 28px; background: #2563eb; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+      #fillLog { background: #f6f8fa; border: 1px solid #e3e6ea; border-radius: 8px; padding: 12px; font-size: 12px; max-height: 240px; overflow-y: auto; }
+    </style>
+  </head>
+  <body>
+    <h1>示例科技公司校园招聘</h1>
+    <p>这是用于测试 Application Form Assistant 的模拟网申页面。右键 → 检查 可查看各字段属性。</p>
+
+    <h2>基本信息</h2>
+    <div class="row"><label for="fullname"><span style="color:#dc2626">*</span> 姓名：</label><input type="text" id="fullname" name="fullName" placeholder="请输入真实姓名" required /></div>
+    <div class="row"><label for="mobile"><span style="color:#dc2626">*</span> 手机号码：</label><input type="tel" id="mobile" name="phone" placeholder="11位手机号" required /></div>
+    <div class="row"><label for="mail"><span style="color:#dc2626">*</span> 电子邮箱：</label><input type="email" id="mail" name="emailAddress" required /></div>
+    <div class="row"><label for="wx">微信号：</label><input type="text" id="wx" name="weixin" /></div>
+
+    <h2>教育经历</h2>
+    <div class="row"><label for="school"><span style="color:#dc2626">*</span> 毕业院校：</label><input type="text" id="school" name="university" required /></div>
+    <div class="row"><label for="college">院系：</label><input type="text" id="college" name="department" /></div>
+    <div class="row"><label for="major"><span style="color:#dc2626">*</span> 专业名称：</label><input type="text" id="major" name="majorName" required /></div>
+    <div class="row">
+      <label for="edu"><span style="color:#dc2626">*</span> 最高学历：</label>
+      <select id="edu" name="degree">
+        <option value="">请选择</option>
+        <option value="bachelor">本科</option>
+        <option value="master">硕士</option>
+        <option value="phd">博士</option>
+      </select>
+    </div>
+    <div class="row"><label for="grad">毕业时间：</label><input type="text" id="grad" name="graduationDate" placeholder="如 2026-06" /></div>
+
+    <h2>实习经历</h2>
+    <div class="row"><label for="company">实习公司：</label><input type="text" id="company" name="internCompany" /></div>
+    <div class="row"><label for="position">实习岗位：</label><input type="text" id="position" name="internPosition" /></div>
+
+    <h2>开放问题</h2>
+    <div class="row"><label for="advantage">个人优势：</label><textarea id="advantage" name="personalAdvantage" maxlength="350" rows="5"></textarea></div>
+    <div class="row"><label for="city">期望城市：</label><input type="text" id="city" name="expectedCity" /></div>
+    <div class="row"><label for="salary">期望薪资：</label><input type="text" id="salary" name="expectedSalary" /></div>
+
+    <h2>需要人工填写的字段（扩展应标记 MANUAL ONLY）</h2>
+    <div class="row"><label for="political">政治面貌：</label><input type="text" id="political" name="politicalStatus" /></div>
+    <div class="row">是否接受岗位调剂：
+      <label style="width:auto"><input type="radio" name="adjust" value="yes" /> 接受</label>
+      <label style="width:auto"><input type="radio" name="adjust" value="no" /> 不接受</label>
+    </div>
+    <div class="row">
+      <label style="width:auto"><input type="checkbox" id="declare" name="honesty" /> 本人确认以上信息真实有效（诚信声明）</label>
+    </div>
+
+    <div class="submit-area">
+      <button type="submit" id="submitBtn" onclick="event.preventDefault(); alert('提交点击已被捕获——扩展本身永远不应触发此事件')">提交申请</button>
+    </div>
+
+    <h2>事件监听日志（验证 React 风格兼容）</h2>
+    <div id="fillLog">等待 input / change 事件…</div>
+    <script>
+      // 模拟受控输入框架：只有收到真正 bubbles 的 input/change 事件才更新状态
+      const state = {};
+      const log = document.getElementById("fillLog");
+      const append = (msg) => {
+        const line = document.createElement("div");
+        line.textContent = msg;
+        log.appendChild(line);
+      };
+      document.querySelectorAll("input, textarea, select").forEach((el) => {
+        if (el.type === "radio" || el.type === "checkbox") return;
+        el.addEventListener("input", () => {
+          state[el.name || el.id] = el.value;
+          append(`[input] ${el.name || el.id} = ${el.value}`);
+        });
+        el.addEventListener("change", () => append(`[change] ${el.name || el.id} = ${el.value}`));
+      });
+      document.getElementById("submitBtn").addEventListener("click", (e) => {
+        e.preventDefault();
+        append("[拦截] submit 按钮被点击（如果这条日志不是你亲手点的，说明扩展违规，请立即反馈）");
+      });
+      window.addEventListener("load", () => append("监听已就绪"));
+    </script>
+  </body>
+</html>

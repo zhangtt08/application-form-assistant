@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>机器人产品助理实习生 - 校园招聘</title>
+  <meta property="og:site_name" content="Moka招聘" />
+  <!--
+    Issue #001 回归样本：Moka SPA 职位详情（app.mokahr.com/campus_apply/*）。
+    特征：title = 「职位名 - 栏目名」，页面内无公司名文本节点，
+    og:site_name / 域名都是 ATS 品牌（绝不能当 company）。
+    期望解析：position=机器人产品助理实习生；company=""（ATS 宿主页无 structured data 时不产出）。
+  -->
+</head>
+<body>
+  <div id="app">
+    <aside class="job-detail-panel">
+      <h1 class="job-name">机器人产品助理实习生</h1>
+      <div class="job-tags"><span>实习</span><span>北京</span></div>
+      <section class="job-desc">
+        <h3>职位描述</h3>
+        <p>岗位职责：协助机器人产品经理完成需求调研与竞品分析；</p>
+        <h3>任职要求</h3>
+        <p>本科在读，每周实习 4 天以上。</p>
+      </section>
+    </aside>
+  </div>
+</body>
+</html>

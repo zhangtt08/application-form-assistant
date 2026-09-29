@@ -1,0 +1,113 @@
+import type { Profile } from "../types/profile";
+
+/** 空白 Profile：所有值留空，由用户在 Profile 页填写 */
+export const defaultProfile: Profile = {
+  basic: {
+    name: "",
+    englishName: "",
+    gender: "",
+    birthDate: "",
+    age: "",
+    phone: "",
+    email: "",
+    wechat: "",
+    qq: "",
+    city: "",
+    portfolio: "",
+    address: "",
+    idNumber: "",
+    nativePlace: "",
+    hukou: "",
+    hukouType: "",
+    politicalStatus: "",
+    maritalStatus: "",
+    height: "",
+    weight: "",
+    workYears: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+  },
+  education: [
+    {
+      school: "",
+      college: "",
+      major: "",
+      degree: "",
+      degreeType: "",
+      educationLevel: "",
+      direction: "",
+      startDate: "",
+      endDate: "",
+      gpa: "",
+      rank: "",
+    },
+  ],
+  internships: [
+    {
+      company: "",
+      department: "",
+      position: "",
+      startDate: "",
+      endDate: "",
+      descriptionShort: "",
+      descriptionMedium: "",
+      descriptionLong: "",
+      responsibilities: "",
+      workContent: "",
+      achievements: "",
+      summary: "",
+      variants: { agent: "", aiApplication: "", aiProduct: "", aiOperation: "", aiSolution: "", aigcMarketing: "" },
+    },
+  ],
+  campus: [],
+  projects: [
+    {
+      name: "",
+      role: "",
+      startDate: "",
+      endDate: "",
+      descriptionShort: "",
+      descriptionMedium: "",
+      descriptionLong: "",
+      keywords: [],
+      background: "",
+      responsibilities: "",
+      workContent: "",
+      achievements: "",
+      summary: "",
+      variants: { agent: "", aiApplication: "", aiProduct: "", aiOperation: "", aiSolution: "", aigcMarketing: "" },
+    },
+  ],
+  skills: { technical: [], tools: [], languages: [], certificates: [], awards: [] },
+  jobPreferences: {
+    expectedCity: [],
+    expectedPosition: [],
+    expectedSalary: "",
+    availableDate: "",
+    employmentType: "",
+    expectedIndustry: "",
+  },
+  content: {
+    selfIntroduction: { short: "", medium: "", long: "" },
+    selfEvaluation: { short: "", medium: "", long: "" },
+    personalAdvantages: { short: "", medium: "", long: "" },
+    careerPlan: { short: "", medium: "", long: "" },
+    hobbies: { short: "", medium: "", long: "" },
+  },
+  careerPreferences: {
+    targetDirections: [],
+    preferredWorkTypes: [],
+    developmentGoals: [],
+  },
+  sensitive: {
+    politicalStatus: "",
+    maritalStatus: "",
+    idNumber: "",
+    emergencyContact: "",
+  },
+};
+
+/** 深拷贝（Profile 内没有 Date/Map 等特殊类型，structuredClone 足够） */
+export function cloneProfile(p: Profile): Profile {
+  return structuredClone(p);
+}

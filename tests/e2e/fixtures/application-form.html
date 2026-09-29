@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>校招申请表 - 星辰科技招聘系统</title>
+</head>
+<body>
+  <h1>校园招聘申请表</h1>
+  <form id="apply-form">
+    <fieldset>
+      <legend>基本信息</legend>
+      <label for="name">姓名</label><input type="text" id="name" name="name">
+      <label for="phone">手机号</label><input type="text" id="phone" name="phone">
+      <label for="email">邮箱</label><input type="email" id="email" name="email">
+    </fieldset>
+
+    <fieldset>
+      <legend>教育背景</legend>
+      <label for="school">学校</label><input type="text" id="school" name="school">
+      <label for="major">专业</label><input type="text" id="major" name="major">
+      <label for="degree">学历</label>
+      <select id="degree" name="degree">
+        <option value="">请选择</option>
+        <option value="本科">本科</option>
+        <option value="硕士">硕士</option>
+        <option value="博士">博士</option>
+      </select>
+    </fieldset>
+
+    <fieldset>
+      <legend>经历与作品</legend>
+      <label for="internship-desc">实习描述</label>
+      <textarea id="internship-desc" name="internship_desc" rows="6"></textarea>
+
+      <label for="project-desc">项目描述</label>
+      <textarea id="project-desc" name="project_desc" rows="6"></textarea>
+
+      <label for="highlights">项目亮点</label>
+      <textarea id="highlights" name="highlights" rows="4" maxlength="300"></textarea>
+
+      <label for="skills">技能</label><input type="text" id="skills" name="skills">
+
+      <label for="advantage">个人优势</label>
+      <textarea id="advantage" name="advantage" rows="4"></textarea>
+
+      <label for="portfolio">个人主页/作品集</label><input type="text" id="portfolio" name="portfolio">
+
+      <div class="field-row">
+        <label for="intro">自我介绍</label>
+        <div id="intro" contenteditable="true" style="min-height:60px;border:1px solid #ccc;"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>其他信息</legend>
+      <label for="salary">期望薪资</label><input type="text" id="salary" name="salary">
+      <label for="available">到岗时间</label><input type="text" id="available" name="available">
+      <label for="idcard">身份证号</label><input type="text" id="idcard" name="idcard">
+      <label for="why-role">为什么申请这个岗位？</label>
+      <textarea id="why-role" name="why_role" rows="4"></textarea>
+
+      <label for="why-company">为什么选择我们公司？</label>
+      <textarea id="why-company" name="why_company" rows="4"></textarea>
+
+      <label for="career-plan">请描述你的职业规划</label>
+      <textarea id="career-plan" name="career_plan" rows="4"></textarea>
+
+      <label for="representative">请介绍你最有代表性的项目</label>
+      <textarea id="representative" name="representative" rows="4"></textarea>
+
+      <label for="extra-info">其他补充说明</label>
+      <textarea id="extra-info" name="extra_info" rows="4" maxlength="200"></textarea>
+
+      <label for="understanding">请描述你对我们的理解</label>
+      <textarea id="understanding" name="understanding" rows="4"></textarea>
+    </fieldset>
+
+    <button type="button" id="submit-btn">提交申请（本测试不会点击）</button>
+  </form>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>诗悦招聘</title>
+  <meta property="og:site_name" content="Moka招聘" />
+  <meta name="company" content="广州诗悦网络科技有限公司" />
+  <!--
+    Issue #002 回归样本：Moka 职位详情（非 h1 结构）。
+    特征：title = 「诗悦招聘」（站点名，不是职位标题）；职位名在 .job-name 详情节点；
+    页面充满导航/栏目干扰词（职位详情/校园招聘/社会招聘/岗位列表/广州/Moka招聘）。
+    期望解析：
+      position = 载具策划 - 3C（望月）- 202X   （来源 job_detail，完整保留，不截断）
+      company  = 广州诗悦网络科技有限公司       （Issue #001 company pipeline 正常解析）
+    禁止：
+      position = 未识别岗位 / ? / Moka招聘 / 职位详情 / 校园招聘 / 广州
+      company  = Moka招聘 / Moka
+  -->
+  <style>
+    /* 模拟 Moka SPA 面板布局（仅供人工比对，测试不加载本文件） */
+    body { font-family: system-ui, sans-serif; margin: 0; display: flex; }
+    nav { width: 200px; background: #f5f6f7; padding: 16px; }
+    nav a { display: block; color: #333; margin: 8px 0; text-decoration: none; }
+    main { flex: 1; padding: 24px; }
+    .job-name { font-size: 22px; font-weight: 600; }
+    .job-tags span { background: #eef; border-radius: 4px; padding: 2px 8px; margin-right: 8px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="brand">Moka招聘</div>
+    <a href="#">首页</a>
+    <a href="#">职位详情</a>
+    <a href="#">校园招聘</a>
+    <a href="#">社会招聘</a>
+    <a href="#">岗位列表</a>
+    <a href="#">加入我们</a>
+    <a href="#">登录</a>
+  </nav>
+  <main>
+    <div class="job-detail-panel">
+      <!-- 职位名节点：Moka SPA 面板结构，职位名不在 h1 里 -->
+      <div class="job-name">载具策划 - 3C（望月）- 202X</div>
+      <div class="job-tags">
+        <span>广州</span>
+        <span>全职</span>
+        <span>本科</span>
+      </div>
+      <section class="job-desc">
+        <h3>职位描述</h3>
+        <p>岗位职责：负责 3C 品类的载具策划与玩法设计，搭建载具成长线；</p>
+        <p>任职要求：熟悉游戏开发流程，对载具类玩法有深度理解。</p>
+      </section>
+      <div class="company-info">
+        <div class="company-name">广州诗悦网络科技有限公司</div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

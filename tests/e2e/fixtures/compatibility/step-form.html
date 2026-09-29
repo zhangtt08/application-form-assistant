@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8"><title>Step Form</title></head>
+<body>
+<h1>步骤表单</h1>
+<div id="step-1">
+  <label for="st-name">姓名</label>
+  <input id="st-name" name="name" type="text">
+  <button id="next-step">下一步</button>
+</div>
+<div id="step-2" style="display:none">
+  <label for="st-school">学校</label>
+  <input id="st-school" name="school" type="text">
+</div>
+<script>
+document.getElementById("next-step").addEventListener("click", function () {
+  document.getElementById("step-1").style.display = "none";
+  document.getElementById("step-2").style.display = "";
+});
+</script>
+</body></html>

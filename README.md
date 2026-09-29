@@ -1,0 +1,126 @@
+# Application Form Assistant
+
+网申自动填写助手：识别岗位 → 识别字段 → 按资料库一键填写。不逐项确认，但绝不自动提交。
+
+## UI 交互模型
+
+侧边栏只有四个一级入口（底部导航）：**投递 / 岗位 / 资料 / 设置**。
+
+### 投递页：一条流水线，不是一堆按钮
+
+1. **开始识别**（唯一主动作）——一次点击串起全部环节，每步状态确定、不装转圈：
+   连接当前页面（含页面内所有框架）→ 识别岗位与填写方向 → 等 SPA 把字段渲染出来 →
+   识别需要填写的字段 → 匹配你的资料 → **直接写入页面**。
+   「识别需要填写的字段」**只把处于申请语境中的控件纳入填写流程**：
+   登录面板、验证码、导航栏搜索框、页脚订阅框等全局控件会被语境门禁排除，
+   侧边栏只以一行统计呈现，不会伪装成待填字段（issue-004）。
+2. **写入判定**（没有逐项确认这一步）：
+   - 资料库里有内容 → 直接写入（含政治面貌 / 婚姻状况 / 身份证号 / 籍贯 / 户口 / 紧急联系人等
+     客观信息 —— 它们存在资料库里，就该被填上；资料库没有则保持空着，绝不编值）；
+   - 内容超出字段字数上限 → **不写**（既不截断也不硬塞超长值），标记「请人工填写」；
+   - 数字框收不下该值（如整数年份框收到 `2027.06`）→ 不写，标记「请人工填写」；
+   - 承诺 / 声明 / 电子签名 / 是否接受调剂 / 已阅读并同意协议 → **永不代填**，
+     这不是「资料」，是替用户做保证；
+   - 文件上传、验证码、密码框 → 不支持，也不碰。
+3. **投递视图**先给结论再给细节：`已填写 N / 待补资料 M / 需人工 K`，
+   每个字段卡写清来源与结果；写入失败的卡片直接说明为什么没填进去。
+4. 岗位方向、路由依据、命中关键词、历史岗位全部收进岗位条的「调整」展开区，
+   默认只显示「当前岗位 + 采用的方向」两行。
+5. **撤销**始终可用；提交永远由你手动点。
+6. 设置页可以关掉「识别后直接填写」，回到先看清单、勾选后再写的节奏（第一次用某个站点时有用）。
+
+### 资料页：多资料库 + 纯文本导入
+
+**多资料库**：一个人投产品岗和运营岗会准备两套不同的经历侧重 —— 所以资料不是一个整体，
+而是「公共信息 + 若干资料库」。
+
+- **公共信息（`shared`）**：姓名 / 联系方式 / 教育背景 / 敏感信息 —— 每个岗位都一样，
+  只存一份，改一次全库生效（不会出现「哪个库里的手机号是旧的」）。
+- **库内容（`content`）**：经历 / 技能 / 求职意向 / 常用文本 —— 每个库各自一份。
+- **每个库声明「适用方向」**（可多选，也可不选 = 通用兜底库）：
+  识别出岗位方向后自动切到对应库（更专用的库优先，没有专用库就用兜底库），
+  投递页的岗位条里随时可以手动换。
+- 资料页顶部是库切换器，支持新建 / 编辑（名称 + 方向）/ 复制 / 删除；
+  只剩一个库时禁止删除。
+- **两层内容优先级**：资料库放你**提前写好的固定内容**，AI 只在缺的时候兜底 ——
+  库内的「岗位方向变体」仍是表达层，未配置时才回退默认表达。
+
+存储：`afa.profiles.v2`（`{ schemaVersion, shared, libraries[], activeLibraryId }`）。
+单库时代的 `afa.profile.v1` 会自动迁移成一个「默认资料库」，并作为**当前库的镜像**继续同步写入
+（旧版扩展 / 脚本 / e2e 继续可用）。读盘时缺字段按默认形状补齐，不整库丢弃。
+
+**纯文本导入**：粘贴一份中文简历的纯文本即可 —— 离线规则解析，不联网、不上传、不需要 API Key：
+
+- 识别分节标题（教育背景 / 实习经历 / 项目经历 / 校园经历 / 技能与证书 / 自我评价 / 求职意向）；
+- 支持 Markdown 记号、全角空格、多种日期写法（`2024.06-2024.09` / `2024年6月—9月` / `2024.06-至今`）；
+- 解析结果**先预览再落盘**：列出识别到哪几类信息 + 每条经历的实体，再选落点
+  「覆盖当前库」/「只填空白项」/「新建一个资料库」；
+- fail-safe：识别不出任何经历条目时整体拒绝，现有资料不受影响；
+- 岗位方向变体（variants）是表达层，导入时一律留空，绝不编造。
+
+代码：`src/profile/libraryStore.ts`（多库存储 + 选库）、`src/profile/resumeTextParser.ts`（文本解析）。
+单测：`tests/libraryStore.test.ts`（29 项）、`tests/resumeTextParser.test.ts`（11 项）。
+
+### 设置页
+
+自动填写开关、JD 自动捕获开关、AI Provider 配置、Dev Trace —— 全部从主流程里挪走。
+
+AI Provider 支持 **Mock（离线）/ DeepSeek / OpenAI 兼容（自定义 / 本地代理）**：
+选 DeepSeek 会自动带出 `https://api.deepseek.com/v1` 与 `deepseek-chat`，只需要粘 API Key。
+`deepseek-reasoner` 等推理型模型不会发送 `temperature`；期望 JSON 的请求会带
+`response_format: { type: "json_object" }`。Key 只存 `chrome.storage.local`，不进代码与日志。
+
+## UI 冒烟验证
+
+单测覆盖不到「侧边栏能不能渲染、按钮点了有没有反应」，`smoke/smoke.py` 补这一层：
+用真实 Chromium 加载 `dist/sidepanel.html`，注入 chrome API 桩（storage / tabs / runtime）
+与假的表单字段，把识别 → 投递 → 确认写入 → 资料导入 → 设置全流程走一遍并逐步截图。
+
+脚本里预置了**两个资料库**（通用 / AI 产品），用于验证「按方向自动切库」真的生效。
+
+```bash
+npm run build
+python smoke/smoke.py          # 截图落在 smoke/shots/
+# 退出码非 0 = 页面上出现未捕获异常或 console.error
+```
+
+## Evaluation（生成质量评测）
+
+本项目的完成标准**不是**「LLM 能生成」，而是：
+
+1. **事实准确** —— 生成的 Variant 中每个数字/技术/角色表达都必须能追溯到 Master Profile Facts；Validator（Numeric / Technology / Responsibility Guard）对不可追溯的表达判定 fail 并禁止保存。
+2. **可验证** —— 每次生成输出结构化 Validation Report（Claim 级别 supported/unsupported/uncertain），人工可在 Review UI 逐条核对。
+3. **可回归测试** —— `evaluation/` 目录维护 20 个 Case 的生成评测数据集（含 10+ Adversarial 诱导性 JD）与 13 条人工标注的 Validator 标注集；修改 Prompt / ClaimExtractor / FactValidator / FactSelection 后运行 `npm run eval:generation` 对比 Fact Precision、Unsupported Claim Rate、Requirement Coverage、Forbidden Hits，防止改好一处坏一片。
+
+### 运行评测
+
+```bash
+npm run eval:generation
+# 无 Provider 配置时明确退出 PROVIDER_UNAVAILABLE（不影响普通测试）
+# 真实调用需环境变量（Key 不落盘）：
+EVAL_PROVIDER_BASE_URL=https://api.example.com/v1 EVAL_PROVIDER_MODEL=gpt-4o-mini EVAL_PROVIDER_API_KEY=... npm run eval:generation
+```
+
+普通测试（`npm test`）保持离线/稳定/免费，仅覆盖 Mock Provider 与确定性规则。
+
+### Prompt Regression
+
+GenerationResult 记录 `promptVersion`（当前 `variant-generator-v1`）。修改 Prompt 时递增版本号，用 `EVAL_BASELINE_RESULTS` 指向旧报告即可输出 v1 vs v2 对比（RegressionReport 不自动下结论——覆盖率提升但 unsupported 增加时明确提示不能认为更好）。Golden Cases（6 个高价值 Case）作为快速回归集。
+
+## Application Lifecycle（Stage 5）
+
+三层关系与状态机：
+
+```
+Job（JobRecord，一个岗位机会，status 由用户手动维护）
+├── Session 1（ApplicationSession，一次网申过程）
+│   ├── Answers（开放题回答，Fact-grounded + Validation）
+│   ├── Fill Plan（确认后的填写计划）
+│   └── Trace（开发用 Debug Trace）
+├── Session 2（同一岗位可多次申请）
+└── Timeline Events（ApplicationEvent，用户可见：捕获/开始申请/填写完成/标记投递/状态变更）
+```
+
+- **Job.status**：saved → preparing → applying → submitted（用户手动确认）→ assessment → interview → offer / rejected / withdrawn / archived
+- **Session.status**：created → scanned → reviewing → filled → completed / abandoned（completed ≠ submitted——插件不知道用户是否真的提交成功）
+- **存储**：`afa.jobs.v2`（v1 自动无损迁移）、`afa.sessions.v2`、`afa.events.v1`，全部 chrome.storage.local 本地保存，无后端

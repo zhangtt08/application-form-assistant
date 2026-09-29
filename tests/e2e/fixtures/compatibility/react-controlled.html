@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8"><title>React Controlled Mock</title></head>
+<body>
+<h1>申请表（React Controlled 模拟）</h1>
+<form>
+  <label for="rc-name">姓名</label>
+  <input id="rc-name" name="name" type="text">
+  <label for="rc-school">学校</label>
+  <input id="rc-school" name="school" type="text">
+  <label for="rc-major">专业</label>
+  <input id="rc-major" name="major" type="text">
+  <label for="rc-email">邮箱</label>
+  <input id="rc-email" name="email" type="email">
+</form>
+<script>
+// 模拟 React 受控组件：value 属性被劫持；直接赋值（非 native setter + input 事件路径）会被回滚
+(function () {
+  var protoDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+  document.querySelectorAll("input").forEach(function (input) {
+    var stateValue = "";
+    var rollbackTimer = null;
+    Object.defineProperty(input, "value", {
+      configurable: true,
+      get: function () { return stateValue; },
+      set: function (v) {
+        protoDesc.set.call(input, v);
+        if (window.__AFA_CONTROLLED_WRITE__) {
+          // ReactControlledStrategy（native setter + input 事件伴随）→ 接受
+          stateValue = v;
+          return;
+        }
+        // 直接赋值：模拟 React 重渲染回滚
+        rollbackTimer = setTimeout(function () {
+          protoDesc.set.call(input, stateValue);
+        }, 120);
+      },
+    });
+    input.addEventListener("input", function () {
+      // 只有伴随 input 事件的写入才提交 state（writer 的 native setter 路径会 dispatch input）
+      clearTimeout(rollbackTimer);
+      stateValue = protoDesc.get.call(input);
+    });
+  });
+})();
+</script>
+</body></html>

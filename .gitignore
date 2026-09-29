@@ -1,0 +1,29 @@
+# 依赖与构建产物（npm install / npm run build 重建）
+node_modules/
+dist/
+coverage/
+.vite/
+
+# Playwright / 测试运行产物（trace、截图、错误快照）
+playwright-report/
+e2e-report/
+test-results/
+
+# smoke 脚本截图产物（smoke.py 的 SHOTS 输出目录，可重跑再生）
+smoke/shots/
+
+# 日志
+*.log
+
+# Vite 构建残留
+*.timestamp-*.mjs
+
+# 跨机传输备份（182 个 hash 双胞胎修复期的备份与 e2e 全量日志，仅本机留存，不入库）
+_transfer-backup/
+
+# Pilot 原始证据中含填写值的截图 / 导出（本地留存，绝不入库，见 docs/TEST_DATA_POLICY.md）
+real-validation-results/private/
+
+# 本机环境变量（本项目目前没有，防御性忽略）
+.env
+.env.*

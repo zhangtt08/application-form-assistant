@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8"><title>Dynamic Fields</title></head>
+<body>
+<h1>动态表单</h1>
+<form id="dyn-form">
+  <label for="dyn-name">姓名</label>
+  <input id="dyn-name" name="name" type="text">
+</form>
+<button id="add-project">添加项目经历</button>
+<script>
+document.getElementById("add-project").addEventListener("click", function () {
+  setTimeout(function () {
+    var wrap = document.createElement("div");
+    wrap.innerHTML = '<label for="dyn-project-1">项目描述</label><textarea id="dyn-project-1" name="project_description"></textarea>';
+    document.getElementById("dyn-form").appendChild(wrap);
+  }, 400);
+});
+</script>
+</body></html>

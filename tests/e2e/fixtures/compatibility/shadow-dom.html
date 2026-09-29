@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8"><title>Shadow DOM</title></head>
+<body>
+<h1>Shadow DOM 表单</h1>
+<div id="shadow-host"></div>
+<script>
+var host = document.getElementById("shadow-host");
+var root = host.attachShadow({ mode: "open" });
+root.innerHTML = '<form><label for="sh-name">姓名</label><input id="sh-name" name="name" type="text"><label for="sh-school">学校</label><input id="sh-school" name="school" type="text"></form>';
+</script>
+</body></html>

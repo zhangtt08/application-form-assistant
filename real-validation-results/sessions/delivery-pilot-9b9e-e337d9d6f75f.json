@@ -1,0 +1,270 @@
+{
+  "url": "https://zhaopin.yaoji.cn/job/065bf5c4-c421-490e-9b9e-e337d9d6f75f",
+  "at": "2026-09-29T15:46:18.662Z",
+  "syntheticOnly": true,
+  "submittedClicked": false,
+  "steps": [
+    "sidepanel_ready",
+    "job_page_loaded",
+    "recognized_jd_page",
+    "clicked_apply(\"投递简历\")",
+    "fill_done",
+    "undo_done"
+  ],
+  "extensionId": "lemicjglmigehcmghknmkceplmfpjeaf",
+  "pageTitle": "姚记招聘官网",
+  "jobBarAfterJdRecognize": "姚记科技 · 游戏测试工程师-27届秋招",
+  "jobBar": "姚记科技 · 游戏测试工程师-27届秋招",
+  "summaryCells": [
+    "14",
+    "0",
+    "1"
+  ],
+  "errorBanner": "",
+  "fieldCards": 15,
+  "cardStatuses": [
+    {
+      "status": "filled",
+      "fieldId": "basic.name",
+      "label": "姓名",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.age",
+      "label": "年龄",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.gender",
+      "label": "性别",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.city",
+      "label": "当前所在城市",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.phone",
+      "label": "手机号码",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.email",
+      "label": "电子邮箱",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "education.degree",
+      "label": "学历",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "education.school",
+      "label": "毕业院校",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "education.endDate",
+      "label": "毕业年份",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "education.major",
+      "label": "专业",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "internship.company",
+      "label": "公司名称",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "internship.startDate",
+      "label": "入职时间",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "internship.endDate",
+      "label": "离职时间",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "internship.workContent",
+      "label": "工作内容描述",
+      "reason": ""
+    },
+    {
+      "status": "manual",
+      "fieldId": "basic.politicalStatus",
+      "label": "是否接受线下面试",
+      "reason": ""
+    }
+  ],
+  "formUrl": "https://zhaopin.yaoji.cn/job/065bf5c4-c421-490e-9b9e-e337d9d6f75f",
+  "controls": {
+    "total": 14,
+    "filled": 12,
+    "unexplained": 0,
+    "empty": 2
+  },
+  "filledSample": [
+    {
+      "label": "姓名 *",
+      "len": 8,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "年龄 *",
+      "len": 2,
+      "frame": "main",
+      "type": "number"
+    },
+    {
+      "label": "当前所在城市 *",
+      "len": 2,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "手机号码 *",
+      "len": 11,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "电子邮箱 *",
+      "len": 24,
+      "frame": "main",
+      "type": "email"
+    },
+    {
+      "label": "毕业院校 *",
+      "len": 6,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "毕业年份 *",
+      "len": 4,
+      "frame": "main",
+      "type": "number"
+    },
+    {
+      "label": "专业 *",
+      "len": 4,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "公司名称",
+      "len": 8,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "入职时间",
+      "len": 7,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "离职时间",
+      "len": 7,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "工作内容描述",
+      "len": 11,
+      "frame": "main",
+      "type": "textarea"
+    }
+  ],
+  "unexplainedSample": [],
+  "emptySample": [
+    {
+      "label": "是",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "否",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    }
+  ],
+  "frameKinds": {
+    "main": 14,
+    "sub": 0
+  },
+  "pageFrames": [
+    "https://zhaopin.yaoji.cn/job/065bf5c4-c421-490e-9b9e-e337d9d6f75f"
+  ],
+  "undoMarkers": 14,
+  "undoNotice": "已撤销本次填写，恢复 0 个字段；14 个字段页面没有交还控制权，请在网页上手动清空。",
+  "afterUndo": {
+    "filled": 12,
+    "unexplained": 0,
+    "empty": 2
+  },
+  "afterUndoSample": [
+    {
+      "label": "姓名 *",
+      "len": 8,
+      "frame": "main"
+    },
+    {
+      "label": "年龄 *",
+      "len": 2,
+      "frame": "main"
+    },
+    {
+      "label": "当前所在城市 *",
+      "len": 2,
+      "frame": "main"
+    },
+    {
+      "label": "手机号码 *",
+      "len": 11,
+      "frame": "main"
+    },
+    {
+      "label": "电子邮箱 *",
+      "len": 24,
+      "frame": "main"
+    },
+    {
+      "label": "毕业院校 *",
+      "len": 6,
+      "frame": "main"
+    },
+    {
+      "label": "毕业年份 *",
+      "len": 4,
+      "frame": "main"
+    },
+    {
+      "label": "专业 *",
+      "len": 4,
+      "frame": "main"
+    }
+  ],
+  "submitStillThere": 14
+}

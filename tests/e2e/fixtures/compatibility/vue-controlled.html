@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8"><title>Vue v-model Mock</title></head>
+<body>
+<h1>申请表（Vue v-model 模拟）</h1>
+<form>
+  <label for="vu-name">姓名</label>
+  <input id="vu-name" name="name" type="text" data-v-app>
+  <label for="vu-school">学校</label>
+  <input id="vu-school" name="school" type="text" data-v-app>
+  <label for="vu-email">邮箱</label>
+  <input id="vu-email" name="email" type="email" data-v-app>
+</form>
+<script>
+// 模拟 Vue v-model：input 事件提交 state；无事件直接赋值回滚
+(function () {
+  var protoDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+  document.querySelectorAll("input").forEach(function (input) {
+    var stateValue = "";
+    var rollbackTimer = null;
+    Object.defineProperty(input, "value", {
+      configurable: true,
+      get: function () { return stateValue; },
+      set: function (v) {
+        protoDesc.set.call(input, v);
+        if (window.__AFA_CONTROLLED_WRITE__) { stateValue = v; return; }
+        rollbackTimer = setTimeout(function () { protoDesc.set.call(input, stateValue); }, 120);
+      },
+    });
+    input.addEventListener("input", function () {
+      clearTimeout(rollbackTimer);
+      stateValue = protoDesc.get.call(input);
+    });
+  });
+})();
+</script>
+</body></html>
