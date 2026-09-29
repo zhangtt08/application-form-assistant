@@ -138,27 +138,34 @@ ATS 简历自动投填浏览器扩展（Manifest V3，TS strict + Vite 三入口
 ## 6. 环境陷阱（本机）
 
 1. 见 §2 的系统 node 问题（最重要）。
-2. **`%LOCALAPPDATA%\ms-playwright` 会在会话外被清空**（本会话实测发生过一次，导致 E2E/smoke
-   突然起不了浏览器；不是本会话删的，AppData 下没做过任何删除）。恢复：
-   `node node_modules/playwright/cli.js install chromium`（装回 chromium-1243 + headless shell）。
-   **下一轮 Pilot 前先确认浏览器还在。**
-3. **python 版 Playwright 与 node 版不是同一份浏览器**。`smoke/smoke.py` 默认找
+2. **`node_modules` 会被整体清空**（2026-09-29 实测：跑 E2E 跑到一半 `node_modules/playwright` 整个消失，
+   worker 报 `Cannot find module .../workerProcessEntry.js`，连带 36 个用例 `did not run` + 一屏 ENOENT）。
+   同样地，`%LOCALAPPDATA%\ms-playwright` 也会被清空。**跑长测前先 `npm install` 一次**，
+   看到 `worker process exited unexpectedly` / `ENOENT ... test-results/...` 别当成产品缺陷，先补依赖再重跑。
+3. **Playwright 版本与本机浏览器 revision 不一定对得上**（要 chromium-1243，机器上只有 1228）。
+   `e2e/helpers.ts:resolveChromeExecutable()` 已改成自动挑本机最新的 `ms-playwright/chromium-*/chrome-win64/chrome.exe`
+   （可用 `AFA_CHROME` 覆盖），**不要再为此下载浏览器**。
+4. **同一时间只跑一个 Playwright 进程。** 两次运行共用 4198 的 `reuseExistingServer`，
+   先结束的那次会关掉 webServer，另一次就整片 `ERR_CONNECTION_REFUSED`（本会话踩过，40 个用例白红）。
+   文件系统不稳时用 `--trace=off` 跑，少写一半 artifact 就少一半 ENOENT 机会。
+5. **python 版 Playwright 与 node 版不是同一份浏览器**。`smoke/smoke.py` 默认找
    `chromium_headless_shell-1228`，本机只有完整版 chromium。用环境变量指过去：
    ```bash
-   AFA_CHROME="C:/Users/Administrator/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe" \
+   AFA_CHROME="C:/Users/Administrator/AppData/Local/ms-playwright/chromium-1228/chrome-win64/chrome.exe" \
      python smoke/smoke.py
    ```
    smoke.py 会打真实渲染截图到 `smoke/shots/`（gitignored），**改 UI 后要用它做视觉验证**，
    不要只看 typecheck 绿就收工。
-4. 批量删 `test-results/`（>50 项）会被安全删除 shim 拦（`SAFE_DELETE_BULK_CONFIRM_REQUIRED`）
-   导致 e2e 启动即崩。用 PowerShell：`Remove-Item -Recurse -Force test-results`。
-5. e2e 的 webServer 占 4198（`reuseExistingServer: true`），并行调试时别起第二个。
-6. 全量 e2e 一轮约 3.5 分钟（workers:1，全绿时）；有失败时每个用例各烧 15–20s 超时会明显变慢。
+6. 批量删 `test-results/`（>50 项）会被安全删除 shim 拦（`SAFE_DELETE_BULK_CONFIRM_REQUIRED`）
+   导致 e2e 启动即崩。用 PowerShell：`powershell.exe -Command "Remove-Item -Recurse -Force test-results"`。
+7. e2e 的 webServer 占 4198（`reuseExistingServer: true`），并行调试时别起第二个。
+8. 全量 e2e 一轮约 10~20 分钟（workers:1，全绿时）；有失败时每个用例各烧 15–30s 超时会明显变慢。
    定位问题按文件分跑，最后再全量。
-7. 多行文本替换一律用 Edit 工具，别用 bash/python heredoc + 反引用——`\1` 会把换行吃掉，
-   本仓库踩过一次把函数压成一行的语法事故。
-8. Windows 控制台默认 GBK，脚本 print 中文/`✓` 会 `UnicodeEncodeError`。smoke.py 已
-   `sys.stdout.reconfigure(encoding="utf-8")`；新脚本照做。
+9. 多行文本替换一律用 Edit 工具，别用 bash/python heredoc + 反引用——`\1` 会把换行吃掉。
+10. Windows 控制台默认 GBK，脚本 print 中文/`✓` 会 `UnicodeEncodeError`。新脚本要
+    `process.stdout.write` 或 `sys.stdout.reconfigure(encoding="utf-8")`。
+11. 注释里别写 `chromium-*/chrome-win64` 这种带 `*/` 的路径——它会把块注释提前关掉，
+    整个文件语法崩（本会话踩过一次，症状是 Playwright 报 `Unexpected character`）。
 
 ## 7. 隐私规则（硬约束）
 
@@ -181,23 +188,24 @@ ATS 简历自动投填浏览器扩展（Manifest V3，TS strict + Vite 三入口
 
 ## 8. 下一步（按优先级）
 
-1. **姚记 Real Write Pilot #1**（合成 profile、真实 DOM 写入验证、**不点 Submit**）。
-   流程与停止条件严格按 `real-validation-results/pilot-log.md` 头部；脚本 `scripts/yaoji-real-write.mjs`。
-   上一轮结果：11/11 写入逐字段 verified、False Fill 0、radio 0/2 未触碰、撤销恢复成功
-   （`real-validation-results/sessions/2026-09-25-yaoji-real-write.md`）。
-   注意 §5.6：这一轮往离职时间框写的会是具体月份。
-2. **修 §5.1 的双仓储**：`clearAllApplicationData` / `deleteJobCascade` 一并清 `afa.jobs.v1`，
-   或把 active job 收敛到 v2 单一来源。
-3. **Moka 登录态二轮**（登录后申请表可达 → Scan 全链路）。2026-09-27 现状：Capture 无回归、
-   未登录页的语境安全过滤已真机验证（issue-004 已修），但**真实申请表单仍在手机号 + 短信验证码登录之后**，
-   游客不可达，所以 Moka 仍是 `Real Write Pending Login`，不是 Real Write Verified。
-   **未来若用户明确授权登录态 Pilot，安全原则（本批只记录，不实施）**：
-   - 优先使用**用户本机已有的持久化浏览器 Profile**，**不要**导出 `storageState` 进仓库；
-   - 认证数据（cookie / token / storageState / 账号）一律不得进入 Git、Pilot Evidence、logs、截图；
-   - Evidence 仍只落长度 / shape / 布尔 / hash，值正文不落盘；含填写值的截图只进 `real-validation-results/private/`。
-   Moka 相关优化到此为止，不做无目标打磨。
-4. **新平台 Pilot**：多步骤表单 + 自定义 Select + DatePicker + Multi-entry 的重平台（Boss 直聘 / 牛客等）。
-5. 远期：LLM 解析器（`JobParser` 接口已留位）、多简历切换体验打磨。
+1. **撤销在真机被站点拒还**（§5.1）：姚记 14 个字段写入成功后撤销 `恢复 0 / 未恢复 14`。
+   下一步做法：撤销后逐字段验证不通过时，再补一轮「清空 + 校验」，或在 Fill 阶段用
+   `HTMLInputElement` 的值描述符 + 焦点/输入序列重放；离线 fixture 的撤销链路已全绿，
+   所以这是站点侧对抗，不要误判成自己的回归。验证入口：
+   `node scripts/delivery-pilot.mjs <岗位页> --apply "投递简历"` → 报告里的 `undoNotice` / `afterUndo`。
+2. **是/否 语义的匹配收口**：真机把「是否接受线下面试」匹配成了 `basic.politicalStatus`
+   （靠容器里隔壁字段的标签撞上的）。已加两道护栏：单选/多选组不再读 `parentText`，
+   以及「答案必须在站点选项里对得上」→ 不写入。剩下的活是给 `是否…` 这类问句
+   补一个正式的 是/否 canonical（`basic.willing*` 之类），让它能真的被填上而不是留人工。
+3. **Moka 登录态二轮**（登录后申请表可达 → 全链路）。游客态下真实申请表单仍在手机号 +
+   短信验证码之后（2026-09-29 复测仍是这个结论），所以 Moka 依旧是 `Real Write Pending Login`。
+   用户已在自己浏览器里登录的场景，扩展是直接对当前页面工作，不需要任何凭证入库：
+   **绝不要把 cookie / token / storageState / 账号写进仓库、Evidence、logs、截图**；
+   Evidence 只落长度 / shape / 布尔 / hash，含填写值的截图只进 `real-validation-results/private/`。
+4. **多平台 Pilot**：把 `scripts/delivery-pilot.mjs` 跑遍北森 / 大易 / 牛客 / Boss 等重平台，
+   统计每站「识别到几个字段 / 填进几个 / 为什么填不进」，按报告补词表与控件策略。
+   站点公开信息（公司名、岗位名、JD、URL）可以留，那是回归原料；用户自己的履历不可以。
+5. 远期：LLM 解析器（`JobParser` 接口已留位）、多简历切换体验打磨、死代码清理（§5.4）。
 
 ## 9. 版本管理与迁移
 
