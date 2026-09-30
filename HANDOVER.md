@@ -1,8 +1,8 @@
 # 交接文档 — application-form-assistant
 
 > 面向接手的 agent。快照 2026-10-01 ｜ remote `origin = https://github.com/zhangtt08/application-form-assistant.git`（main 可 fast-forward 推送）
-> 当前验证态（**同一份 dist 上实测**，2026-09-30，非引用）：Unit **644/644**（38 文件）· typecheck 零输出 · build 三入口 ·
-> E2E **88/88**（20.5 分钟全绿；含英文 ATS、「是否…」单选题、JD-only 页文案、岗位原页跳转用例）· Compat **30/30**（含在 88 内，报告 False Fill Count = 0）·
+> 当前验证态（**同一份 dist 上实测**，2026-09-30，非引用）：Unit **618/618**（37 文件）· typecheck 零输出 · build 三入口 ·
+> E2E **88/88**（2026-10-01 在交付树上实测 20.8 分钟全绿；含英文 ATS、「是否…」单选题、JD-only 页文案、岗位原页跳转、资料库折叠操作 UX1/UX8/UX9）· Compat **30/30**（含在 88 内，报告 False Fill Count = 0）·
 > smoke.py exit 0 / `PROBLEMS (none)`（420px 真实渲染截图在 `smoke/shots/`）· privacy:scan **0 ERROR / 0 WARN**。
 > 真机 Real Write 平台 **3 个**：姚记（自建 ATS）15/15 卡片按资料库写入；
 > Greenhouse（job-boards）9 卡片写入、Lever（jobs.lever.co）8 卡片写入，EEO / 授权题一律不动 —— 见 `real-validation-results/pilot-log.md`。
@@ -100,7 +100,7 @@ ATS 简历自动投填浏览器扩展（Manifest V3，TS strict + Vite 三入口
 | `matching/` `rules/` | 表单字段 → canonical 字段匹配（含 `autocomplete` 标准语义信号）；别名、风险规则、忽略规则 |
 | `pipeline/` | `scanPipeline.ts`（Scan→Match→状态分级 + 数字/选项格式门禁）、`fillPlan.ts`（ConfirmedFillPlan + 结果汇总，携带 frameId） |
 | `answering/` `generation/` | 开放题：分类 → prompt → 生成 → **answerValidator 事实追溯守卫**；Provider（OpenAI 兼容 / mock） |
-| `compatibility/` | `writeVerifier.ts`（写策略 + 异步验证 + 一次重试，**已接线**）、`environmentDetector`、`recoveryManager`/`siteAdapter`/`importRestore`/`workspaceIntegrity`（**仍未接线，见 §5**） |
+| `compatibility/` | 只剩两个文件：`writeVerifier.ts`（写策略 + 异步验证 + 一次重试）与 `environmentDetector.ts`（SPA 路由观察 / 环境判定）；其余四个未接线模块已在 2026-10-01 的目录精简里删除（§5.4） |
 | `workspace/` | 岗位库 / Session / Event 仓储（`afa.jobs.v2` 系），删除/清空会同步清掉 v1 的关联（幽灵岗位修复） |
 | `sidepanel/` | React UI；样式**只有** `styles/base.css` 一份；`.field-card` 带 `data-status` / `data-field-id` |
 
