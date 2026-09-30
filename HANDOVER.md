@@ -1,7 +1,7 @@
 # 交接文档 — application-form-assistant
 
 > 面向接手的 agent。快照 2026-10-01 ｜ 有远端 `origin`（GitHub 上同名仓库，账号名按 §7 不写进文档）；`main` 可 fast-forward 推送
-> 当前验证态（**同一份 dist 上实测**，2026-09-30，非引用）：Unit **618/618**（37 文件）· typecheck 零输出 · build 三入口 ·
+> 当前验证态（**同一份 dist 上实测**，2026-09-30，非引用）：Unit **617/617**（36 文件）· typecheck 零输出 · build 三入口 ·
 > E2E **88/88**（2026-10-01 在交付树上实测 20.8 分钟全绿；含英文 ATS、「是否…」单选题、JD-only 页文案、岗位原页跳转、资料库折叠操作 UX1/UX8/UX9）· Compat **30/30**（含在 88 内，报告 False Fill Count = 0）·
 > smoke.py exit 0 / `PROBLEMS (none)`（420px 真实渲染截图在 `smoke/shots/`）· privacy:scan **0 ERROR / 0 WARN**。
 > 真机 Real Write 平台 **3 个**：姚记（自建 ATS）15/15 卡片按资料库写入；

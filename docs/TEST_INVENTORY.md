@@ -10,13 +10,13 @@
 
 | 层 | 命令 | 运行环境 | 验证什么 | 当前规模（2026-09-25 实测） |
 |---|---|---|---|---|
-| Unit / Integration | `npm test`（必须用系统 node，见上） | vitest + jsdom | 纯逻辑与 DOM 无关解析：parser/capture/pipeline/matcher/store/writer 契约 | **37 文件 / 618 例全绿**（2026-10-01 实测；目录精简删掉了 pilot 与四个未接线模块的用例） |
+| Unit / Integration | `npm test`（必须用系统 node，见上） | vitest + jsdom | 纯逻辑与 DOM 无关解析：parser/capture/pipeline/matcher/store/writer 契约 | **36 文件 / 617 例全绿**（2026-10-01 实测；目录精简删掉了 pilot、四个未接线模块的用例与一个临时探针测试） |
 | Browser E2E | `npm run test:e2e` | Playwright + 真实 Chromium + dist 扩展 | 真实扩展端到端流程与安全语义（Scan Never Writes DOM） | **58 例全绿**（`--list` 实测：全量 88 例 / 15 文件，2026-09-30 全跑 20.8 分钟） |
 | Compatibility | `npm run test:compat` | 同上 | 真实表单形态的写入兼容（受控组件/Shadow DOM/iframe/多条目…）与真实站点（姚记） | **30 例全绿**（e2e/compat/ 5 文件：aa-core 14、compat-report 8、real-yaoji 1、ux-order-pilot 2、ux-profilepack 5；compat 报告 False Fill Count = 0） |
 | Real-data Replay | `npm test` 内 `tests/realdata.moka-retest.test.ts` | vitest | 真实 Moka 页面原料（落盘 JSON）→ 正式 parser 的回归；JSON 缺失自动跳过，不伪造 | 5 例 |
 | Real-site Optional | `scripts/issue002-retest.mjs` 等脚本 | Playwright 无头 | 真机结构侦察与原料采集（需要网络）；产物作为 Real-data Replay 的输入 | 按需 |
 
-## Unit 层文件清单（tests/，37 文件）
+## Unit 层文件清单（tests/，36 文件）
 
 | 文件 | 验证什么 |
 |---|---|
@@ -50,7 +50,6 @@
 | labelCoverage.test.ts | 56 条真机 / 高频中文网申标签逐条断言 canonical（漏一个词表项就红），并断言内推码 / 推荐人 / 民族 / 已阅读并同意 / 本人承诺保持 unknown |
 | realLabels.yaoji.test.ts | **真机标签回归**：从姚记前端产物抠出的 12 个实际字段文案逐个断言映射；「推荐人姓名 / 内推码」不得用应聘者资料顶替 |
 | englishAtsAliases.test.ts | 英文 ATS 标签：First/Last name 拆分、`autocomplete=given-name/family-name`、LinkedIn vs Portfolio、Where are you based（不被 job.expectedCity 抢）；授权/签证问句恒 MANUAL_ONLY |
-| __probe.test.ts | 临时探针（custom-select.html 扫描分级 dump，供 Safety E2E 参考） |
 
 ## Browser E2E / Compatibility 文件清单（e2e/，88 例，其中 compat/ 30 例）
 
