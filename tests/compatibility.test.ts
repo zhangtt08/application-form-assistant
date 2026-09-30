@@ -1,12 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { detectEnvironment, installRouteObserver, installFormObserver, markWriterActive, isWriterActive } from "../src/compatibility/environmentDetector";
 import { chooseStrategy, fillWithVerification } from "../src/compatibility/writeVerifier";
-import { fillWithRecovery } from "../src/compatibility/recoveryManager";
-import { classifySelect, isInteractable, GenericSiteAdapter } from "../src/compatibility/siteAdapter";
-import { validateWorkspaceImport, mergeJobRecords, checkDataIntegrity, estimateWorkspaceStorage } from "../src/compatibility/workspaceIntegrity";
 import { migrateV1toV2 } from "../src/workspace/jobRepository";
-import type { JobRecord, ApplicationSessionV2, ApplicationEvent } from "../src/workspace/types";
-import type { JobContext } from "../src/job/schema";
+import type { ApplicationSessionV2 } from "../src/workspace/types";
 
 // ---------- jsdom helpers ----------
 
@@ -49,15 +45,6 @@ function makeReactControlled(initial = "", log?: { inputEvents: number }): HTMLI
   return input;
 }
 
-function makeRecord(id: string): JobRecord {
-  return {
-    ...({
-      id, company: "测试", position: "岗位", location: "", jd: "", sourceUrl: "",
-      pageTitle: "", createdAt: "2026-09-23T00:00:00Z", jobType: "aiProduct", keywords: [], source: "captured",
-    } as JobContext),
-    status: "saved", tags: [], notes: "", lastSessionId: null, archived: false, updatedAt: "2026-09-23T00:00:00Z",
-  };
-}
 
 beforeEach(() => {
   markWriterActive(0); // 重置模块级 writer 冷却（跨测试污染防护）
@@ -217,37 +204,6 @@ describe("Write Verification", () => {
 
 // ---------- 8. Hidden duplicate filtering ----------
 
-describe("Hidden Duplicate Filtering", () => {
-  it("display:none / aria-hidden / 零尺寸 → isInteractable false", () => {
-    const hidden = makeInput();
-    hidden.style.display = "none";
-    expect(isInteractable(hidden)).toBe(false);
-    const aria = makeInput();
-    aria.setAttribute("aria-hidden", "true");
-    expect(isInteractable(aria)).toBe(false);
-    const disabled = makeInput();
-    disabled.disabled = true;
-    expect(isInteractable(disabled)).toBe(false);
-    const visible = makeInput();
-    expect(isInteractable(visible)).toBe(true);
-  });
-
-  it("GenericSiteAdapter matches 任意页面（Generic First）", () => {
-    expect(GenericSiteAdapter.matches(location, document)).toBe(true);
-  });
-
-  it("Custom Select 三级分类", () => {
-    const native = document.createElement("select");
-    expect(classifySelect(native)).toBe("native");
-    const known = document.createElement("div");
-    known.setAttribute("role", "listbox");
-    expect(classifySelect(known)).toBe("known-custom");
-    const unknown = document.createElement("div");
-    unknown.className = "fancy-picker-widget";
-    expect(classifySelect(unknown)).toBe("unknown-custom");
-  });
-});
-
 // ---------- 9-10. Multi-entry binding ----------
 
 describe("Multi-entry Binding", () => {
@@ -322,76 +278,7 @@ describe("Step Form Continuity", () => {
 
 // ---------- 16. Stale element recovery ----------
 
-describe("Stale Element Recovery", () => {
-  it("元素被移除后 relocate 失败 → FIELD_DISAPPEARED（不猜测）", async () => {
-    const el = makeInput({ name: "gone-field", id: "gone-field" });
-    // fingerprintOf 是 content script 内部函数——这里用 recovery 的行为契约验证：
-    // 元素不在 document 中 → 恢复失败且不抛异常
-    el.remove();
-    const r = await fillWithRecovery(JSON.stringify({ tag: "input", type: "text", name: "gone-field", id: "gone-field", label: "", placeholder: "", idx: -1 }), "值", "");
-    expect(r.recovered).toBe(false);
-    expect(r.reason).toBe("FIELD_DISAPPEARED");
-  });
-});
-
 // ---------- 17-19. Import / capacity / integrity ----------
-
-describe("Workspace Import", () => {
-  it("合法导出 JSON → 校验通过", () => {
-    const payload = {
-      kind: "application-form-assistant/workspace", version: 1, exportedAt: "2026-09-23T00:00:00Z",
-      jobs: [], sessions: [], events: [],
-    };
-    const v = validateWorkspaceImport(payload);
-    expect(v.ok).toBe(true);
-    expect(v.stats?.jobs).toBe(0);
-  });
-
-  it("非法 schema → 校验失败且列出错误", () => {
-    expect(validateWorkspaceImport(null).ok).toBe(false);
-    expect(validateWorkspaceImport({ kind: "wrong" }).ok).toBe(false);
-    const v = validateWorkspaceImport({ kind: "application-form-assistant/workspace", version: 99 });
-    expect(v.ok).toBe(false);
-    expect(v.errors.some((e) => e.includes("version"))).toBe(true);
-  });
-
-  it("Merge：按 id 去重合并，本地已有 id 保留", () => {
-    const local = [makeRecord("j1"), makeRecord("j2")];
-    const incoming = [makeRecord("j2"), makeRecord("j3")];
-    const merged = mergeJobRecords(local, incoming);
-    expect(merged.map((j) => j.id).sort()).toEqual(["j1", "j2", "j3"]);
-  });
-
-  it("Storage estimate：无 chrome API 时优雅降级", async () => {
-    const est = await estimateWorkspaceStorage();
-    expect(est.quotaBytes).toBeGreaterThan(0);
-    expect(est.warning).toBe(est.ratio > 0.7);
-  });
-});
-
-describe("Data Integrity Check", () => {
-  it("孤儿 session / event → warning 不删除", () => {
-    const jobs = [makeRecord("j1")];
-    const sessions: ApplicationSessionV2[] = [
-      { sessionId: "s1", jobId: "j1", jobContextId: "j1", status: "created", createdAt: "", updatedAt: "", sourceUrl: "", effectiveProfileType: "aiProduct", detectedFields: 0, confirmedFields: 0, generatedAnswers: 0, fillPlanSummary: null, traceId: null, masterProfileUpdatedAt: null },
-      { sessionId: "s2", jobId: "ghost", jobContextId: "ghost", status: "created", createdAt: "", updatedAt: "", sourceUrl: "", effectiveProfileType: "aiProduct", detectedFields: 0, confirmedFields: 0, generatedAnswers: 0, fillPlanSummary: null, traceId: null, masterProfileUpdatedAt: null },
-    ];
-    const events: ApplicationEvent[] = [
-      { id: "e1", jobId: "j1", type: "JOB_CAPTURED", timestamp: "", metadata: {} },
-      { id: "e2", jobId: "ghost", type: "JOB_UPDATED", timestamp: "", metadata: {} },
-    ];
-    const issues = checkDataIntegrity(jobs, sessions, events);
-    expect(issues.some((i) => i.code === "ORPHAN_SESSION")).toBe(true);
-    expect(issues.some((i) => i.code === "ORPHAN_EVENT")).toBe(true);
-    // jobs 未被修改（只警告不删除）
-    expect(jobs.length).toBe(1);
-  });
-
-  it("无孤儿 → 无 issue", () => {
-    const issues = checkDataIntegrity([makeRecord("j1")], [], []);
-    expect(issues).toHaveLength(0);
-  });
-});
 
 // ---------- 20. v1 migration 复验（回归） ----------
 

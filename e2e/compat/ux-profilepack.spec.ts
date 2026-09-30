@@ -141,6 +141,8 @@ test("UX9: 删除当前资料库 → 兜底回默认资料库", async () => {
   // 切到待删除库再删除（window.confirm 需要 accept）
   await sidePanel.locator(".libbar .chip-select", { hasText: "待删除库" }).click();
   sidePanel.on("dialog", (d) => void d.accept());
+  // 改名 / 复制 / 删除收在「管理资料库」折叠里：先展开（与用户真实动作一致）
+  await sidePanel.locator(".libbar-fold > summary").click();
   await sidePanel.getByRole("button", { name: "删除", exact: true }).click();
 
   // fallback：active 回到 默认资料库，待删除库消失

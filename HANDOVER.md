@@ -1,6 +1,6 @@
 # 交接文档 — application-form-assistant
 
-> 面向接手的 agent。快照 2026-09-30 ｜ HEAD `341e92e`（无 remote，历史只在本机；工作区有大量未提交改动 = 本会话成果）
+> 面向接手的 agent。快照 2026-10-01 ｜ remote `origin = https://github.com/zhangtt08/application-form-assistant.git`（main 可 fast-forward 推送）
 > 当前验证态（**同一份 dist 上实测**，2026-09-30，非引用）：Unit **644/644**（38 文件）· typecheck 零输出 · build 三入口 ·
 > E2E **88/88**（20.5 分钟全绿；含英文 ATS、「是否…」单选题、JD-only 页文案、岗位原页跳转用例）· Compat **30/30**（含在 88 内，报告 False Fill Count = 0）·
 > smoke.py exit 0 / `PROBLEMS (none)`（420px 真实渲染截图在 `smoke/shots/`）· privacy:scan **0 ERROR / 0 WARN**。
@@ -80,7 +80,7 @@ S="C:/Users/Administrator/.workbuddy/binaries/node/versions/22.22.2-3/node_modul
 会间歇性 EPERM 并**静默丢弃 vitest 测试文件收集**——症状是测试文件数漂移。数量漂移 = 已中招，
 别把「少跑了」当成「过了」。
 
-**本仓库有 git**（`git rev-parse --is-inside-work-tree` = true，当前 HEAD `341e92e`，无 remote）。
+**本仓库有 git 且有远端**：`origin` = `https://github.com/zhangtt08/application-form-assistant.git`，分支 `main`。
 历史里有一次隐私 scrub（§7），tag `pilot-v1-baseline` 指向 `d042026`，**不要 retag、不要重写历史**；
 在 scrub 之前不要生成 bundle。改动前用 `git status` 看清工作区，未提交的改动就是本会话的成果。
 
@@ -148,10 +148,14 @@ ATS 简历自动投填浏览器扩展（Manifest V3，TS strict + Vite 三入口
    （`eventDispatcher.rankPopupOptions`），两个弹层同时开着且都有同名选项时不再点错（`tests/popupIsolation.test.ts`）。
    仍属**启发式**：如果站点把两个弹层的选项都静态挂在 body 上、又不新出现节点，就只能靠距离排序；
    真机遇到新的挂法要继续补这条排序。
-4. **死代码**（产品代码零引用，只有 unit 或历史脚本用）：`compatibility/{recoveryManager,
-   siteAdapter,importRestore,workspaceIntegrity}.ts`、`installFormObserver`、`src/pilot/**`、
-   `sidepanel/components/{PackLibrary,TagInput}.tsx`、`scripts/{append-css,update-*,fix-ux9,
-   debug-aa11}.mjs`（一次性源码改写脚本，**别再跑**）。删不删由用户定。
+4. **目录精简（2026-10-01）已删除的死代码**：`compatibility/{recoveryManager,siteAdapter,importRestore,
+   workspaceIntegrity}.ts`、`src/pilot/**`、`sidepanel/components/{PackLibrary,TagInput}.tsx`、
+   一次性源码改写脚本 `scripts/{append-css,update-e2e,update-e2e-2,update-nav,update-ux,fix-ux9,debug-aa11}.mjs`
+   （**别再跑**），以及它们的 unit（`tests/pilot.test.ts` 整个文件、`tests/compatibility.test.ts` 里
+   Stale Element Recovery / Workspace Import / Data Integrity / Custom Select 分类四个 describe）。
+   仍留存但产品零调用：`environmentDetector.installFormObserver`（有 unit 覆盖）、
+   `src/profile/pack/{packStore,matcher,defaultPacks}`（只有 `types.ts` 的 `ProfilePack` 被 `profileResolver`
+   以 type-only 方式引用；其余靠 `tests/profilepack.test.ts` 覆盖）。要再删就先想清楚 ProfilePack 这条线要不要留。
 5. **`summarizeFillOutcome` 的口径**：`manualBlocked` 统计所有 `manual` 候选，`skipped` 用减法推导。
    不是错，但读数字时容易误读。
 6. **日期格式仍是"按字段语义适配"而非全量**：`input[type=number]` 的年份/月份框会从 `2026.06` 取
@@ -267,7 +271,7 @@ ATS 简历自动投填浏览器扩展（Manifest V3，TS strict + Vite 三入口
 
 git 已建。历史（新→旧）：`e9b1329` privacy phase 2 · `f5fd15b` privacy 文档整改 ·
 `f085ea2` privacy phase 1 · `9ac913d` 前端设计/可用性 + 写入链路 4 个真实缺陷 ·
-`c719f34` 姚记 real-write pilot · `d042026` baseline（tag `pilot-v1-baseline`）。无 remote。
+`c719f34` 姚记 real-write pilot · `d042026` baseline（tag `pilot-v1-baseline`）。
 
 `.gitignore` 排除：`node_modules/ dist/ coverage/ .vite/ playwright-report/ e2e-report/
 test-results/ smoke/shots/ real-validation-results/private/ _transfer-backup/ *.log
