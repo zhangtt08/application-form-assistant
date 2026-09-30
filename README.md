@@ -35,7 +35,7 @@ Every careers site makes you re-type the same name, phone number, education and 
 **Prerequisites**: Node.js 18+, npm, and Google Chrome or Microsoft Edge 114+.
 
 ```bash
-git clone https://github.com/zhangtt08/application-form-assistant.git
+git clone https://github.com/<your-account>/application-form-assistant.git
 cd application-form-assistant
 npm install
 npm run build

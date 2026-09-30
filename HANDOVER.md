@@ -1,6 +1,6 @@
 # 交接文档 — application-form-assistant
 
-> 面向接手的 agent。快照 2026-10-01 ｜ remote `origin = https://github.com/zhangtt08/application-form-assistant.git`（main 可 fast-forward 推送）
+> 面向接手的 agent。快照 2026-10-01 ｜ 有远端 `origin`（GitHub 上同名仓库，账号名按 §7 不写进文档）；`main` 可 fast-forward 推送
 > 当前验证态（**同一份 dist 上实测**，2026-09-30，非引用）：Unit **618/618**（37 文件）· typecheck 零输出 · build 三入口 ·
 > E2E **88/88**（2026-10-01 在交付树上实测 20.8 分钟全绿；含英文 ATS、「是否…」单选题、JD-only 页文案、岗位原页跳转、资料库折叠操作 UX1/UX8/UX9）· Compat **30/30**（含在 88 内，报告 False Fill Count = 0）·
 > smoke.py exit 0 / `PROBLEMS (none)`（420px 真实渲染截图在 `smoke/shots/`）· privacy:scan **0 ERROR / 0 WARN**。
@@ -80,7 +80,7 @@ S="C:/Users/Administrator/.workbuddy/binaries/node/versions/22.22.2-3/node_modul
 会间歇性 EPERM 并**静默丢弃 vitest 测试文件收集**——症状是测试文件数漂移。数量漂移 = 已中招，
 别把「少跑了」当成「过了」。
 
-**本仓库有 git 且有远端**：`origin` = `https://github.com/zhangtt08/application-form-assistant.git`，分支 `main`。
+**本仓库有 git 且有远端**：`origin` 指向 GitHub 上的本仓库（分支 `main`）。账号名/个人句柄**不写进任何被跟踪文件**（§7 隐私规则；`npm run privacy:scan` 会以 `banned:personal-handle` 报 ERROR）。
 历史里有一次隐私 scrub（§7），tag `pilot-v1-baseline` 指向 `d042026`，**不要 retag、不要重写历史**；
 在 scrub 之前不要生成 bundle。改动前用 `git status` 看清工作区，未提交的改动就是本会话的成果。
 

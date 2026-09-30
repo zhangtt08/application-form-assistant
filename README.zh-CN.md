@@ -12,7 +12,7 @@
 前置要求：Node.js 18+、npm、Chrome 或 Edge 114+。
 
 ```bash
-git clone https://github.com/zhangtt08/application-form-assistant.git
+git clone https://github.com/<你的账号>/application-form-assistant.git
 cd application-form-assistant
 npm install
 npm run build
