@@ -80,28 +80,24 @@ export interface KnownLimitation {
 
 export const KNOWN_LIMITATIONS: KnownLimitation[] = [
   {
-    code: "SAME_ORIGIN_IFRAME_CROSS_FRAME_FILL",
-    description: "same-origin iframe 内字段暂不支持跨 frame 自动填写（需 allFrames 聚合注入）",
-    matches: (env) => env.sameOriginIframeCount > 0,
-    guidance: "iframe 区域字段需人工填写；已在兼容层记录为已知限制",
-  },
-  {
-    code: "CROSS_ORIGIN_IFRAME",
-    description: "cross-origin iframe 受浏览器安全限制，不支持也不应绕过",
-    matches: (env) => env.crossOriginIframeCount > 0,
-    guidance: "该区域需要人工填写（浏览器安全边界）",
+    code: "SANDBOXED_FRAME_NO_INJECTION",
+    description:
+      "iframe 内的字段已按 frame 路由识别与填写（同源与跨域都走 all_frames 注入）；" +
+      "只有被 sandbox / 注入策略挡住的那个 frame 才会整块留在需人工",
+    matches: () => false, // 注入失败在运行时逐 frame 如实上报，不在这里做环境级预判
+    guidance: "某个 frame 的字段整块没填上时看侧边栏的 frame 提示，那通常是站点禁止注入，不是链路坏了",
   },
   {
     code: "UNKNOWN_CUSTOM_SELECT",
-    description: "未知自定义下拉组件强制 Manual Only，不自动点击",
+    description: "认不出选项结构的自定义下拉强制 Manual Only，绝不乱点",
     matches: (env) => env.customSelectCount > 0,
-    guidance: "检测到自定义下拉组件——请人工选择；系统不会误点击",
+    guidance: "检测到自定义下拉组件——请人工选择；系统只点文本精确/同极性命中的那个选项",
   },
   {
     code: "COMPLEX_DATE_PICKER",
-    description: "复杂 DatePicker 组件第一阶段 Manual Only",
-    matches: () => false, // 由字段级 date 检测触发
-    guidance: "日期组件请人工选择",
+    description: "日期组件走「点站点自己的日历格子 + 等价日期回显」，命不中才按字段判需人工",
+    matches: () => false,
+    guidance: "日期字段没填上是该站点的日历结构未被命中，不等于日期类整体不支持",
   },
 ];
 

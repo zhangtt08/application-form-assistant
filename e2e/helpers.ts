@@ -97,6 +97,10 @@ export const PROFILE_FIXTURE: Profile = {
   basic: {
     name: "张三",
     englishName: "",
+    surname: "张",
+    givenName: "三",
+    linkedin: "https://www.linkedin.com/in/syn-zhangsan",
+    github: "https://github.com/syn-zhangsan",
     gender: "男",
     birthDate: "",
     age: "22",
@@ -184,6 +188,8 @@ export const PROFILE_FIXTURE: Profile = {
     availableDate: "2027年毕业后",
     employmentType: "校招全职",
     expectedIndustry: "人工智能",
+    // 站点选项写成「可以接受 / 不接受」，资料库答案是「是」
+    acceptOfflineInterview: "是",
   },
   content: {
     selfIntroduction: { short: "", medium: "", long: "" },

@@ -100,6 +100,20 @@ function TextInput(p: { label: string; value: string; onChange: (v: string) => v
   );
 }
 
+/** 「是否…」偏好：未设置 = 资料库里还没记录，识别到该题时不会替你猜 */
+function ChoiceInput(p: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="pe-row">
+      <span className="pe-k">{p.label}</span>
+      <select value={p.value} onChange={(e) => p.onChange(e.target.value)}>
+        <option value="">未设置</option>
+        <option value="是">是</option>
+        <option value="否">否</option>
+      </select>
+    </label>
+  );
+}
+
 function TextareaInput(p: { label: string; value: string; onChange: (v: string) => void; rows?: number }) {
   return (
     <label className="pe-row">
@@ -157,6 +171,10 @@ export function ProfileEditor({
 
   /** 有未保存的修改时，切库 / 离开先问一句，避免白填 */
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(profile), [draft, profile]);
+  /** 资料库里是否已经有内容（决定「导入简历」面板默认摊开还是收起） */
+  const hasAnyContent =
+    Boolean(draft.basic.name?.trim()) ||
+    draft.education.length + draft.internships.length + draft.campus.length + draft.projects.length > 0;
   const guardDirty = (): boolean =>
     !dirty || window.confirm("还有未保存的修改，继续操作会丢掉它们。要先保存吗？（点「取消」回去保存）");
 
@@ -283,13 +301,13 @@ export function ProfileEditor({
         >
           重置为空
         </button>
-        <button type="button" className="primary" onClick={handleSave} disabled={!dirty}>
-          {dirty ? "保存" : "已保存"}
+        <button type="button" className="primary" onClick={handleSave} disabled={!dirty} title={dirty ? "" : "没有需要保存的改动"}>
+          保存
         </button>
       </div>
 
       <p className="hint">
-        下面的资料会被填进网申表单。<strong>敏感信息（政治面貌 / 婚姻 / 身份证 / 紧急联系人）永远不会被自动填写。</strong>
+        下面的资料会被填进网申表单。<strong>承诺、已阅读并同意、电子签名、服从调剂、背景调查与签证授权，以及推荐人这类别人的信息，扩展永不代填。</strong>
       </p>
 
       <LibraryPicker
@@ -302,15 +320,22 @@ export function ProfileEditor({
         onDelete={onDeleteLibrary}
       />
 
-      <ImportPanel
-        current={draft}
-        libraries={libraries}
-        activeLibraryId={activeLibraryId}
-        onImported={(p) => {
-          setDraft(p);
-          onPersist(p);
-        }}
-      />
+      {/* 已经有资料的人进这一页是为了改字段，不是再导入一次简历：
+          导入面板默认收起，空资料时才摊开（新手第一眼就该看到它）。 */}
+      <details className="import-fold" open={!hasAnyContent}>
+        <summary>
+          {hasAnyContent ? "再导入一份简历（粘贴文本 / 导入 JSON）" : "导入你的简历（粘贴文本 / 导入 JSON）"}
+        </summary>
+        <ImportPanel
+          current={draft}
+          libraries={libraries}
+          activeLibraryId={activeLibraryId}
+          onImported={(p) => {
+            setDraft(p);
+            onPersist(p);
+          }}
+        />
+      </details>
 
       <div className="pe-group">公共信息 · 所有资料库共用，改一次全库生效</div>
 
@@ -318,6 +343,11 @@ export function ProfileEditor({
         <summary>基础信息</summary>
         <TextInput label="姓名" value={draft.basic.name} onChange={(v) => set((p) => (p.basic.name = v))} />
         <TextInput label="英文名" value={draft.basic.englishName} onChange={(v) => set((p) => (p.basic.englishName = v))} />
+        <p className="hint">英文招聘网站（Greenhouse / Lever / Workday 这类）会把姓名拆成 First name 和 Last name 两个框。只填「姓名」它们都对不上，这两栏各填一次就都能自动填。</p>
+        <TextInput label="姓氏" value={draft.basic.surname ?? ""} onChange={(v) => set((p) => (p.basic.surname = v))} />
+        <TextInput label="名字" value={draft.basic.givenName ?? ""} onChange={(v) => set((p) => (p.basic.givenName = v))} />
+        <TextInput label="领英" value={draft.basic.linkedin ?? ""} onChange={(v) => set((p) => (p.basic.linkedin = v))} />
+        <TextInput label="GitHub" value={draft.basic.github ?? ""} onChange={(v) => set((p) => (p.basic.github = v))} />
         <TextInput label="性别" value={draft.basic.gender} onChange={(v) => set((p) => (p.basic.gender = v))} />
         <TextInput label="出生日期" value={draft.basic.birthDate} onChange={(v) => set((p) => (p.basic.birthDate = v))} />
         <TextInput label="年龄" value={draft.basic.age} onChange={(v) => set((p) => (p.basic.age = v))} />
@@ -378,9 +408,11 @@ export function ProfileEditor({
       </details>
 
       <details>
-        <summary className="text-manual">敏感信息（公共 · 永不自动填写）</summary>
+        <summary className="text-manual">证件与其他身份信息（公共 · 各库共用）</summary>
         <div className="banner banner-review">
-          这几项扩展永远不会自动写入表单（MANUAL ONLY），也不会被 AI 生成引用——存在这里只是方便你自己复制。
+          这几项是资料库里就有的客观信息：网站问到就按这里的内容填写，没填就留空。
+          真正永不代填的是<strong>承诺 / 已阅读并同意 / 电子签名 / 服从调剂 / 背景调查与签证授权</strong>
+          这类「替你做保证」的控件，以及推荐人等<strong>别人的信息</strong>。
         </div>
         <TextInput label="政治面貌" value={draft.sensitive.politicalStatus} onChange={(v) => set((p) => (p.sensitive.politicalStatus = v))} />
         <TextInput label="婚姻状况" value={draft.sensitive.maritalStatus} onChange={(v) => set((p) => (p.sensitive.maritalStatus = v))} />
@@ -555,6 +587,12 @@ export function ProfileEditor({
         <TextInput label="期望薪资" value={draft.jobPreferences.expectedSalary} onChange={(v) => set((p) => (p.jobPreferences.expectedSalary = v))} />
         <TextInput label="到岗时间" value={draft.jobPreferences.availableDate} onChange={(v) => set((p) => (p.jobPreferences.availableDate = v))} />
         <TextInput label="就业类型" value={draft.jobPreferences.employmentType} onChange={(v) => set((p) => (p.jobPreferences.employmentType = v))} />
+        <p className="hint">下面这些「是否…」问题在网申里以单选题出现。你在资料库答一次，之后所有网站都按这个答案自动勾选；选「未设置」时扩展不会替你猜。</p>
+        <ChoiceInput label="是否接受线下面试" value={draft.jobPreferences.acceptOfflineInterview ?? ""} onChange={(v) => set((p) => (p.jobPreferences.acceptOfflineInterview = v))} />
+        <ChoiceInput label="是否接受线上面试" value={draft.jobPreferences.acceptOnlineInterview ?? ""} onChange={(v) => set((p) => (p.jobPreferences.acceptOnlineInterview = v))} />
+        <ChoiceInput label="是否接受出差" value={draft.jobPreferences.acceptBusinessTrip ?? ""} onChange={(v) => set((p) => (p.jobPreferences.acceptBusinessTrip = v))} />
+        <ChoiceInput label="是否接受异地/外派" value={draft.jobPreferences.acceptRelocation ?? ""} onChange={(v) => set((p) => (p.jobPreferences.acceptRelocation = v))} />
+        <ChoiceInput label="是否接受加班" value={draft.jobPreferences.acceptOvertime ?? ""} onChange={(v) => set((p) => (p.jobPreferences.acceptOvertime = v))} />
       </details>
 
       <details>

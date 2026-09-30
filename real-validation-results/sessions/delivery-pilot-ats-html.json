@@ -1,0 +1,487 @@
+{
+  "url": "http://127.0.0.1:4198/modern-ats.html",
+  "at": "2026-09-29T18:46:08.355Z",
+  "syntheticOnly": true,
+  "submittedClicked": false,
+  "steps": [
+    "sidepanel_ready",
+    "job_page_loaded",
+    "recognized_jd_page",
+    "fill_done",
+    "undo_done"
+  ],
+  "extensionId": "lemicjglmigehcmghknmkceplmfpjeaf",
+  "pageTitle": "校招网申 - 现代 ATS 模拟",
+  "jobBarAfterJdRecognize": "未识别到岗位",
+  "jobBar": "未识别到岗位",
+  "summaryCells": [
+    "20",
+    "0",
+    "9"
+  ],
+  "errorBanner": "",
+  "fieldCards": 29,
+  "cardStatuses": [
+    {
+      "status": "filled",
+      "fieldId": "basic.name",
+      "label": "姓名",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.phone",
+      "label": "手机号",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.email",
+      "label": "电子邮箱",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.gender",
+      "label": "性别",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.city",
+      "label": "所在城市",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "job.expectedCity",
+      "label": "期望工作城市",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "education.endDate",
+      "label": "毕业时间",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "skills.languages",
+      "label": "语言能力",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "education.school",
+      "label": "毕业院校",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "education.major",
+      "label": "专业",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "education.degree",
+      "label": "最高学历",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "internship.company",
+      "label": "公司名称",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "internship.position",
+      "label": "职位名称",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "content.selfEvaluation",
+      "label": "自我评价",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "job.availableDate",
+      "label": "到岗时间",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "internship.hasExperience",
+      "label": "是否有实习经历",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.wechat",
+      "label": "微信号",
+      "reason": "该字段在页面内嵌框架里，已按框架单独写入"
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.portfolio",
+      "label": "个人主页",
+      "reason": "该字段在页面内嵌框架里，已按框架单独写入"
+    },
+    {
+      "status": "filled",
+      "fieldId": "job.expectedIndustry",
+      "label": "期望行业",
+      "reason": "该字段在页面内嵌框架里，已按框架单独写入"
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.qq",
+      "label": "QQ号",
+      "reason": "该字段在页面内嵌框架里，已按框架单独写入"
+    },
+    {
+      "status": "manual",
+      "fieldId": "unknown",
+      "label": "本人承诺以上信息真实有效",
+      "reason": ""
+    },
+    {
+      "status": "manual",
+      "fieldId": "internship.position",
+      "label": "是否接受岗位调剂",
+      "reason": ""
+    },
+    {
+      "status": "manual",
+      "fieldId": "unknown",
+      "label": "电子签名",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "content.personalAdvantages",
+      "label": "个人优势",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "推荐人姓名",
+      "reason": ""
+    },
+    {
+      "status": "empty",
+      "fieldId": "basic.idNumber",
+      "label": "身份证号",
+      "reason": ""
+    },
+    {
+      "status": "empty",
+      "fieldId": "internship.company",
+      "label": "公司名称",
+      "reason": ""
+    },
+    {
+      "status": "empty",
+      "fieldId": "internship.position",
+      "label": "职位名称",
+      "reason": ""
+    },
+    {
+      "status": "empty",
+      "fieldId": "job.acceptOfflineInterview",
+      "label": "是否接受线下面试",
+      "reason": ""
+    }
+  ],
+  "formUrl": "http://127.0.0.1:4198/modern-ats.html",
+  "controls": {
+    "total": 36,
+    "filled": 18,
+    "unexplained": 1,
+    "empty": 17
+  },
+  "filledSample": [
+    {
+      "label": "姓名",
+      "len": 8,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "手机号",
+      "len": 11,
+      "frame": "main",
+      "type": "tel"
+    },
+    {
+      "label": "电子邮箱",
+      "len": 24,
+      "frame": "main",
+      "type": "email"
+    },
+    {
+      "label": "男",
+      "len": 1,
+      "frame": "main",
+      "type": "radio"
+    },
+    {
+      "label": "所在城市",
+      "len": 2,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "英语CET-6",
+      "len": 7,
+      "frame": "main",
+      "type": "checkbox"
+    },
+    {
+      "label": "毕业院校",
+      "len": 6,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "专业",
+      "len": 4,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "请选择",
+      "len": 2,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "公司名称",
+      "len": 8,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "职位名称",
+      "len": 8,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "自我评价",
+      "len": 27,
+      "frame": "main",
+      "type": ""
+    },
+    {
+      "label": "到岗时间",
+      "len": 7,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "是",
+      "len": 1,
+      "frame": "main",
+      "type": "radio"
+    },
+    {
+      "label": "微信号",
+      "len": 10,
+      "frame": "sub",
+      "type": "text"
+    },
+    {
+      "label": "个人主页",
+      "len": 27,
+      "frame": "sub",
+      "type": "text"
+    },
+    {
+      "label": "期望行业",
+      "len": 3,
+      "frame": "sub",
+      "type": "text"
+    },
+    {
+      "label": "QQ号",
+      "len": 9,
+      "frame": "sub",
+      "type": "text"
+    }
+  ],
+  "unexplainedSample": [
+    {
+      "label": "请选择",
+      "len": 7,
+      "frame": "main",
+      "type": "text"
+    }
+  ],
+  "emptySample": [
+    {
+      "label": "搜索职位",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "女",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "身份证号",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "",
+      "frame": "main",
+      "type": "text",
+      "readonly": true
+    },
+    {
+      "label": "英语CET-4",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "托福",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "公司名称",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "职位名称",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "个人优势",
+      "frame": "main",
+      "type": "textarea",
+      "readonly": false
+    },
+    {
+      "label": "本人承诺以上信息真实有效",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "是",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "否",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "可以接受",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "不接受",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "否",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "推荐人姓名",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "电子签名",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    }
+  ],
+  "frameKinds": {
+    "main": 32,
+    "sub": 4
+  },
+  "pageFrames": [
+    "http://127.0.0.1:4198/modern-ats.html",
+    "http://localhost:4198/frame-form.html"
+  ],
+  "undoMarkers": 16,
+  "undoNotice": "已撤销本次填写，恢复 0 个字段；40 个字段页面没有交还控制权，请在网页上手动清空。",
+  "afterUndo": {
+    "filled": 18,
+    "unexplained": 1,
+    "empty": 17
+  },
+  "afterUndoSample": [
+    {
+      "label": "姓名",
+      "len": 8,
+      "frame": "main"
+    },
+    {
+      "label": "手机号",
+      "len": 11,
+      "frame": "main"
+    },
+    {
+      "label": "电子邮箱",
+      "len": 24,
+      "frame": "main"
+    },
+    {
+      "label": "男",
+      "len": 1,
+      "frame": "main"
+    },
+    {
+      "label": "所在城市",
+      "len": 2,
+      "frame": "main"
+    },
+    {
+      "label": "英语CET-6",
+      "len": 7,
+      "frame": "main"
+    },
+    {
+      "label": "毕业院校",
+      "len": 6,
+      "frame": "main"
+    },
+    {
+      "label": "专业",
+      "len": 4,
+      "frame": "main"
+    }
+  ],
+  "submitStillThere": 1
+}

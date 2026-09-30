@@ -38,8 +38,8 @@ export interface ProviderPreset {
 
 export const PROVIDER_PRESETS: Record<ProviderConfig["providerType"], ProviderPreset> = {
   mock: {
-    label: "Mock（离线测试）",
-    hint: "确定性输出，不调用任何真实模型。用于验证流程本身。",
+    label: "离线（不联网）",
+    hint: "不调用任何模型：开放题的回答由你资料库里的条目拼装，内容不出这台机器。想要更连贯的表达，再选下面的 DeepSeek 或 OpenAI 兼容。",
     baseUrl: "",
     models: [],
     needsKey: false,

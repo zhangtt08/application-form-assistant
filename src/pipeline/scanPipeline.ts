@@ -2,6 +2,7 @@ import type { CandidateField, CandidateStatus, MatchResult, RawField, ResolvedVa
 import type { Profile } from "../types/profile";
 import { matchField, confidenceLevel } from "../matching/matcher";
 import { assessRisk, type RiskAssessment } from "../rules/riskRules";
+import { polarityMatches, polarityTerms } from "../rules/yesNoAnswers";
 import { resolveValue } from "../profile/profileResolver";
 import { isCanonicalFieldId, getCanonicalFieldDef } from "../rules/canonicalFields";
 import { LogEvent, logger } from "../utils/logger";
@@ -73,7 +74,11 @@ function normalizeChoice(s: string): string {
 export function optionSetCoversValue(options: string[], value: string): boolean {
   const terms = value.split(/[、,，;；/\n]+/).map(normalizeChoice).filter(Boolean);
   const texts = options.map(normalizeChoice);
-  return terms.some((t) => texts.some((o) => o === t || (t.length >= 2 && (o.includes(t) || t.includes(o)))));
+  return terms.some((t) => {
+    // 「是/否」这类答案：站点写的是「可以接受 / 不接受」，只认同极性精确写法
+    if (polarityTerms(t)) return options.some((o) => polarityMatches(t, o));
+    return texts.some((o) => o === t || (t.length >= 2 && (o.includes(t) || t.includes(o))));
+  });
 }
 
 /**

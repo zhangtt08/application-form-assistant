@@ -9,6 +9,7 @@ import type {
   SensitiveProfile,
   SkillsProfile,
 } from "../types/profile";
+import { YES_NO_PREFERENCE_KEYS } from "../types/profile";
 
 /**
  * Profile 导入校验（fail-safe + 向后兼容归一化）：
@@ -25,7 +26,8 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 const BASIC_KEYS: (keyof BasicProfileShape)[] = [
-  "name", "englishName", "gender", "birthDate", "age", "phone", "email", "wechat", "qq", "city", "portfolio",
+  "name", "englishName", "surname", "givenName", "linkedin", "github",
+  "gender", "birthDate", "age", "phone", "email", "wechat", "qq", "city", "portfolio",
   "address", "idNumber", "nativePlace", "hukou", "hukouType", "politicalStatus", "maritalStatus",
   "height", "weight", "workYears", "emergencyContactName", "emergencyContactPhone",
 ];
@@ -36,6 +38,7 @@ const BASIC_KEYS_OPTIONAL = new Set([
   "age", "qq", "portfolio", "address", "idNumber", "nativePlace", "hukou", "hukouType",
   "politicalStatus", "maritalStatus", "height", "weight", "workYears",
   "emergencyContactName", "emergencyContactPhone",
+  "surname", "givenName", "linkedin", "github",
 ]);
 
 function checkBasic(v: unknown, errors: string[]): BasicProfileShape {
@@ -247,6 +250,11 @@ export function validateProfile(input: unknown): ValidationResult {
             ? job.expectedIndustry
             : (errors.push("jobPreferences.expectedIndustry 必须是 string"), ""),
     };
+    // 增量字段：「是否…」偏好（旧 Profile 没有 → 不报错；类型不对 → 丢弃该项，不整体拒绝）
+    for (const key of YES_NO_PREFERENCE_KEYS) {
+      const v = job[key];
+      if (typeof v === "string") jobOut[key] = v;
+    }
   }
 
   const content = input.content;

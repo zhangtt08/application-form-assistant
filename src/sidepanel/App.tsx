@@ -156,6 +156,8 @@ export default function App() {
   /** 仍通过确认框填写的补充字段（兼容手动预览流程）。 */
   const [confirmTargets, setConfirmTargets] = useState<CandidateField[]>([]);
   const [mutated, setMutated] = useState(false);
+  /** 本轮识别后是否执行过撤销：决定副标题说「已撤销」还是「这个页面没有可填字段」 */
+  const [undone, setUndone] = useState(false);
   const [resumeInfo, setResumeInfo] = useState<{ sessionId: string; detectedFields: number } | null>(null);
   const [showSubmitPrompt, setShowSubmitPrompt] = useState(false);
   const [inboxRefresh, setInboxRefresh] = useState(0);
@@ -632,8 +634,10 @@ export default function App() {
       };
       if (!res?.ok || !res.raw) return null;
       const job = await jobParser.parse(res.raw as Parameters<RuleBasedJobParser["parse"]>[0]);
-      // 表单页也会返回「未识别岗位」——那不是 JD 页，采用它只会污染岗位库
-      if (job.position === "未识别岗位" && job.jd.length < 200) return null;
+      // 岗位名就是这个记录的身份证：抓不到岗位名的页面（点「投递」后展开的申请子页、列表页、
+      // 登录面板）不许新建或覆盖岗位，否则真机 Lever 上「Spotify · Android Engineer - Experience」
+      // 会被 `/apply` 页的一次再识别改成「未识别岗位」（jd 里带职位描述，长度守卫拦不住）。
+      if (job.position === "未识别岗位") return null;
       // Safety Flow 补充守卫：表单页可能解析出「校招申请表」这类伪岗位（jd 超长但无 JD 正文标记）。
       // 真实 JD 页必有岗位职责/任职要求类标记——没有标记的一律不捕获（防止 autoCaptureJob 覆盖真岗位）。
       if (!/(岗位职责|任职要求|职位描述|工作职责|工作内容|responsibilities|requirements|job description)/i.test(job.jd)) {
@@ -665,6 +669,7 @@ export default function App() {
     setNotice("");
     setFillSummary(null);
     setMutated(false);
+    setUndone(false);
     setShowSubmitPrompt(false);
     setSteps(RECOGNIZE_STEPS.map((s) => ({ ...s, state: "pending" as const })));
     if (!getTraceId()) startTrace();
@@ -849,7 +854,11 @@ export default function App() {
         setPhase("ready");
       } else {
         setPreviewRevealed(false);
-        setNotice(`已识别 ${res.fields.length} 个字段，暂无匹配到资料的可填写项。`);
+        setNotice(
+          res.fields.length === 0
+            ? "这个页面没有需要填写的表单字段。岗位已经记录，进入网申页后再点「开始识别」。"
+            : `已识别 ${res.fields.length} 个字段，暂无匹配到资料的可填写项。`,
+        );
         setPhase("ready");
       }
     } catch (err) {
@@ -881,6 +890,7 @@ export default function App() {
         );
         setFillSummary(null);
         setOriginals([]);
+        setUndone(true);
         setNotice(
           res.failed > 0
             ? `已撤销本次填写，恢复 ${res.restored} 个字段；${res.failed} 个字段页面没有交还控制权，请在网页上手动清空。`
@@ -1010,13 +1020,32 @@ export default function App() {
   }
 
   const anyPending = reviewTargets.length;
+  /** 招聘官网的职位详情页常是这个形态：岗位读到了，但表单在「投递」之后（往往还要登录） */
+  const noFormHint = activeJob
+    ? "这个页面没有网申表单字段（岗位已记录，进入投递页再识别）"
+    : "这个页面没有网申表单字段，也没抓到岗位名——在岗位页面识别一次，或直接进投递页再识别";
+  /** 识别完成后副标题只说「下一步做什么」，不重复下面的汇总数字 */
+  const doneHint =
+    anyPending > 0
+      ? `还有 ${anyPending} 项需要你确认`
+      : filledList.length > 0
+        ? `已填好 ${filledList.length} 项，请核对后自行点击提交`
+        : undone
+          ? "网页上的内容已撤销，可重新识别"
+          : candidates.length === 0
+            ? noFormHint
+            : "这个页面没有可以自动填写的字段，网页内容未被修改";
   const subtitle =
     tab === "apply"
       ? phase === "idle"
         ? "打开网申页面，点一下「开始识别」"
         : phase === "recognizing"
           ? "识别中…"
-          : `待确认 ${reviewTargets.length} · 已填写 ${filledList.length}`
+          : phase === "done"
+            ? doneHint
+            : candidates.length === 0
+              ? noFormHint
+              : `待确认 ${reviewTargets.length} · 已填写 ${filledList.length}`
       : tab === "jobs"
         ? "已捕获的岗位与投递记录"
         : tab === "profile"
@@ -1053,7 +1082,9 @@ export default function App() {
           </button>
         </div>
       )}
-      {showSubmitPrompt && (
+      {showSubmitPrompt && filledList.length > 0 && (
+        /* 撤销之后 filledList 清空：这条「表单已填写，请自行提交」必须跟着消失，
+           否则页面上会同时出现「已撤销本次填写」和「表单已填写」两句互相矛盾的话。 */
         <div className="banner banner-ok">
           表单已填写。请核对后在网站上<strong>自己点击提交</strong>。
           <button type="button" className="btn-sm primary" onClick={() => void handleMarkSubmitted()}>
@@ -1162,7 +1193,7 @@ export default function App() {
                     </button>
                   )}
                   <span className="spacer" />
-                  {phase === "ready" && !previewRevealed ? (
+                  {phase === "ready" && !previewRevealed && candidates.length > 0 ? (
                     /* 没有自动匹配字段时，仍可打开预览查看识别结果 */
                     <button type="button" className="primary" onClick={() => setPreviewRevealed(true)}>
                       查看填写预览
@@ -1174,27 +1205,38 @@ export default function App() {
                           全部确认（{anyPending}）
                         </button>
                       )}
-                      <button
-                        type="button"
-                        className="primary"
-                        disabled={pendingToFill.length === 0 || phase === "filling"}
-                        onClick={() => {
-                          setConfirmTargets(pendingToFill);
-                          setShowConfirm(true);
-                        }}
-                      >
-                        {confirmable.length > 0
-                          ? `填写确认的 ${confirmable.length} 项`
-                          : pendingToFill.length > 0
-                            ? `确认并填写 ${pendingToFill.length} 项`
-                            : "没有可填写的项"}
-                      </button>
+                      {(phase === "done" || candidates.length === 0) && pendingToFill.length === 0 ? (
+                        /* 填完之后的主操作必须是「下一步」，不是一个灰掉的「没有可填写的项」 */
+                        <button type="button" className="primary" onClick={() => setTab("jobs")}>
+                          投递下一个岗位
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="primary"
+                          disabled={pendingToFill.length === 0 || phase === "filling"}
+                          onClick={() => {
+                            setConfirmTargets(pendingToFill);
+                            setShowConfirm(true);
+                          }}
+                        >
+                          {confirmable.length > 0
+                            ? `填写确认的 ${confirmable.length} 项`
+                            : pendingToFill.length > 0
+                              ? `确认并填写 ${pendingToFill.length} 项`
+                              : "没有可填写的项"}
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
               </section>
 
-              {url && <div className="url-line">{url}</div>}
+              {url && (
+                <div className="url-line">
+                  当前页面：<a href={url} target="_blank" rel="noreferrer">{url}</a>
+                </div>
+              )}
 
               {previewRevealed && (
                 <FieldList
@@ -1292,6 +1334,10 @@ export default function App() {
 
       <section className="card">
         <h3 className="card-title">AI 模型（生成岗位方向表达与开放题回答）</h3>
+        <p className="muted small">
+          默认「离线（不联网）」：开放题的回答由你资料库里的条目拼装。
+          选 DeepSeek 或 OpenAI 兼容并填入 Base URL + Key 之后才会调用模型；Key 只存这台机器。
+        </p>
         <ProviderSettingsForm />
       </section>
 

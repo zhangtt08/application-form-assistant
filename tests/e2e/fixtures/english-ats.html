@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Senior Product Analyst — Careers at Example Corp</title>
+  <style>
+    body { font: 14px/1.5 system-ui, sans-serif; margin: 24px; }
+    .field { margin: 12px 0; }
+    .field label { display: block; margin-bottom: 4px; font-weight: 600; }
+    input[type="text"], input[type="email"], input[type="tel"], textarea, select { width: 320px; padding: 6px; }
+    .note { color: #666; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <!--
+    英文 ATS（Greenhouse / Lever / Workable 形态）离线替身。
+    真实站点里这些字段名一律是 First name / Last name / Where are you based 这类写法，
+    与中文站的「姓名 / 所在城市」不同词，之前整页识别不到 —— 这个 fixture 用来钉住覆盖。
+  -->
+  <h1>Senior Product Analyst</h1>
+  <p class="note">Example Corp · Remote (US) · Full time</p>
+
+  <section id="personal">
+    <h2>Personal information</h2>
+    <div class="field">
+      <label for="first-name">First name</label>
+      <input type="text" id="first-name" name="first_name" autocomplete="given-name" />
+    </div>
+    <div class="field">
+      <label for="last-name">Last name</label>
+      <input type="text" id="last-name" name="last_name" autocomplete="family-name" />
+    </div>
+    <div class="field">
+      <label for="email">Email address</label>
+      <input type="email" id="email" name="email" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label for="phone">Phone number</label>
+      <input type="tel" id="phone" name="phone" autocomplete="tel" />
+    </div>
+    <div class="field">
+      <label for="based">Where are you based?</label>
+      <input type="text" id="based" name="current_location" />
+    </div>
+    <div class="field">
+      <label for="linkedin">LinkedIn profile</label>
+      <input type="text" id="linkedin" name="linkedin_profile" />
+    </div>
+    <div class="field">
+      <label for="website">Portfolio / website</label>
+      <input type="text" id="website" name="website" autocomplete="url" />
+    </div>
+    <div class="field">
+      <label for="github">GitHub URL</label>
+      <input type="text" id="github" name="github_url" />
+    </div>
+  </section>
+
+  <section id="extras">
+    <h2>Additional details</h2>
+    <div class="field">
+      <label for="resume">Resume</label>
+      <input type="file" id="resume" name="resume" />
+      <p class="note">Upload 类控件永远不进填写流程。</p>
+    </div>
+    <div class="field">
+      <label for="cover-letter">Cover letter</label>
+      <textarea id="cover-letter" name="cover_letter" maxlength="1200"></textarea>
+    </div>
+    <div class="field" id="authorization-row">
+      <span class="label">Are you legally authorized to work in the United States?</span>
+      <label><input type="radio" name="authorization" value="yes"> Yes</label>
+      <label><input type="radio" name="authorization" value="no"> No</label>
+    </div>
+    <div class="field" id="sponsorship-row">
+      <span class="label">Will you now or in the future require sponsorship for employment visa status?</span>
+      <label><input type="radio" name="sponsorship" value="yes"> Yes</label>
+      <label><input type="radio" name="sponsorship" value="no"> No</label>
+    </div>
+  </section>
+
+  <button type="button" id="submit-btn">Submit application (never clicked by the extension)</button>
+  <script>
+    document.getElementById("submit-btn").addEventListener("click", function () {
+      this.setAttribute("data-clicked", "1");
+    });
+  </script>
+</body>
+</html>

@@ -18,6 +18,7 @@ import {
   isTextAreaElement,
   normalizeChoice,
   normalizeDate,
+  polarityMatches,
   readDisplayValue,
   valueMatchesRequested,
   waitFor,
@@ -100,11 +101,16 @@ export async function setSelectValue(el: HTMLSelectElement, value: string): Prom
   const norm = normalizeChoice(wanted);
   const byValue = Array.from(el.options).find((o) => o.value === wanted);
   const byText = Array.from(el.options).find((o) => normalizeChoice(o.textContent ?? "") === norm);
+  // 「是/否」答案 vs 「可以接受 / 不接受」选项：同极性精确写法，放在包含式匹配之前
+  // （包含式会把「不接受」当成「接受」，那是填错位置而不是少填）
+  const byPolarity = Array.from(el.options).find(
+    (o) => polarityMatches(wanted, o.textContent ?? "") || polarityMatches(wanted, o.value ?? ""),
+  );
   const byPartial = Array.from(el.options).filter((o) => {
     const t = normalizeChoice(o.textContent ?? "");
     return t.length > 1 && (t.includes(norm) || norm.includes(t));
   });
-  const target = byValue ?? byText ?? (byPartial.length === 1 ? byPartial[0] : undefined);
+  const target = byValue ?? byText ?? byPolarity ?? (byPartial.length === 1 ? byPartial[0] : undefined);
   if (!target) return { ok: false, detail: `select 中没有匹配选项: ${wanted.slice(0, 20)}` };
 
   try {
@@ -129,10 +135,17 @@ export async function setRadioValue(el: HTMLInputElement, value: string): Promis
   if (!isRadioElement(el)) return { ok: false, detail: "不是 radio 控件" };
   const group = getRadioGroup(el);
   const norm = normalizeChoice(value);
-  const choice = group.find((item) =>
-    [item.value, htmlForLabel(item), item.getAttribute("aria-label") ?? "", item.getAttribute("title") ?? ""]
-      .some((text) => normalizeChoice(text) === norm),
-  );
+  const choice =
+    group.find((item) =>
+      [item.value, htmlForLabel(item), item.getAttribute("aria-label") ?? "", item.getAttribute("title") ?? ""]
+        .some((text) => normalizeChoice(text) === norm),
+    ) ??
+    // 资料里的「是」vs 站点的「可以接受」：只在同极性精确写法里找，不做包含匹配
+    group.find((item) =>
+      [item.value, htmlForLabel(item), item.getAttribute("aria-label") ?? "", item.getAttribute("title") ?? ""].some(
+        (text) => polarityMatches(value, text),
+      ),
+    );
   if (!choice) return { ok: false, detail: `radio 中没有匹配选项: ${value}` };
   try {
     choice.click();
@@ -166,13 +179,19 @@ export async function setCheckboxValues(el: HTMLElement, value: string): Promise
     const exact = group.find((item) =>
       [item.value, htmlForLabel(item), item.getAttribute("aria-label") ?? ""].some((t) => normalizeChoice(t) === term),
     );
-    const partial = exact
+    // 「是/否」答案的同极性写法优先于包含式匹配（包含式会把「不接受」当成「接受」）
+    const samePolarity = exact
+      ? undefined
+      : group.find((item) =>
+          [item.value, htmlForLabel(item), item.getAttribute("aria-label") ?? ""].some((t) => polarityMatches(term, t)),
+        );
+    const partial = exact || samePolarity
       ? undefined
       : group.filter((item) => {
           const t = normalizeChoice(htmlForLabel(item) || item.value || "");
           return t.length > 1 && (t.includes(term) || term.includes(t));
         });
-    const hit = exact ?? (partial && partial.length === 1 ? partial[0] : undefined);
+    const hit = exact ?? samePolarity ?? (partial && partial.length === 1 ? partial[0] : undefined);
     if (!hit) missing.push(term);
     else if (!picked.includes(hit)) picked.push(hit);
   }
@@ -246,12 +265,42 @@ function popupOptions(doc: Document): HTMLElement[] {
   }) as HTMLElement[];
 }
 
+/**
+ * 同页多个弹层同时可见时（真机见过：上一个下拉没关就点下一个），
+ * 只按文本在全 document 里找选项会点到**另一个**下拉里的同名项 —— 那是错填。
+ * 排序：① 点自己触发器之后才出现的优先（就是本次这个弹层）；② 离触发器近的优先。
+ */
+function rankPopupOptions(options: HTMLElement[], trigger: Element, before: Set<Element>): HTMLElement[] {
+  const ancestors = new Set<Element>();
+  for (let p: Element | null = trigger; p; p = p.parentElement) ancestors.add(p);
+  const distance = (node: Element): number => {
+    let d = 0;
+    for (let p: Element | null = node; p; p = p.parentElement) {
+      if (ancestors.has(p)) return d;
+      d += 1;
+    }
+    return Number.MAX_SAFE_INTEGER;
+  };
+  return [...options].sort((a, b) => {
+    const freshness = (before.has(a) ? 1 : 0) - (before.has(b) ? 1 : 0);
+    if (freshness !== 0) return freshness;
+    return distance(a) - distance(b);
+  });
+}
+
 function chooseOption(options: HTMLElement[], target: string): HTMLElement | undefined {
   const norm = normalizeChoice(target);
   const exact = options.find((node) => normalizeChoice(node.textContent ?? "") === norm);
   if (exact) return exact;
   const byTitle = options.find((node) => normalizeChoice(node.getAttribute("title") ?? "") === norm);
   if (byTitle) return byTitle;
+  // 「是/否」答案的同极性写法（只认精确写法，绝不包含式：「不接受」里有「接受」二字）
+  const byPolarity = options.find(
+    (node) =>
+      polarityMatches(target, node.textContent ?? "") || polarityMatches(target, node.getAttribute("title") ?? "") ||
+      polarityMatches(target, node.getAttribute("data-value") ?? ""),
+  );
+  if (byPolarity) return byPolarity;
   const partial = options.filter((node) => {
     const t = normalizeChoice(node.textContent ?? "");
     return t.length > 1 && (t.includes(norm) || norm.includes(t));
@@ -311,7 +360,12 @@ function staticOptionUnder(scope: HTMLElement, target: string): HTMLElement | un
   );
   return (
     nodes.find((node) => normalizeChoice(node.textContent ?? "") === norm) ??
-    nodes.find((node) => normalizeChoice(node.getAttribute("data-value") ?? "") === norm)
+    nodes.find((node) => normalizeChoice(node.getAttribute("data-value") ?? "") === norm) ??
+    // 「是/否」答案 vs 站点写成「可以接受 / 不接受」的同极性选项文本
+    nodes.find(
+      (node) =>
+        polarityMatches(target, node.textContent ?? "") || polarityMatches(target, node.getAttribute("data-value") ?? ""),
+    )
   );
 }
 
@@ -339,6 +393,11 @@ export async function setCustomSelectValue(el: HTMLElement, value: string): Prom
       return found.length > 0 ? found : null;
     }, timeout, 40);
 
+  // 点触发器**之前**已经可见的选项：属于别的弹层或静态列表，优先级排到后面
+  const beforeOpen = new Set(popupOptions(doc));
+  const pick = (options: HTMLElement[] | null | undefined) =>
+    options ? chooseOption(rankPopupOptions(options, trigger, beforeOpen), target) : undefined;
+
   const tryOnce = async (): Promise<boolean> => {
     try {
       trigger.focus?.();
@@ -348,13 +407,13 @@ export async function setCustomSelectValue(el: HTMLElement, value: string): Prom
     }
     pressAll(trigger);
     let options = await waitForOptions(400);
-    let picked = options ? chooseOption(options, target) : undefined;
+    let picked = pick(options);
     if (!picked) {
       // 可搜索 combobox（react-select / antd showSearch）：选项要在输入之后才出现
       typeIntoCombobox(el, target);
       pressAll(trigger);
       options = await waitForOptions(450);
-      picked = options ? chooseOption(options, target) : undefined;
+      picked = pick(options);
     }
     if (!picked) {
       // 点用户视觉上真正会按到的那个节点（遮罩层 / 图标层），再找一次弹层
@@ -362,7 +421,7 @@ export async function setCustomSelectValue(el: HTMLElement, value: string): Prom
       if (hit) {
         pressAll(hit);
         options = await waitForOptions(350);
-        picked = options ? chooseOption(options, target) : undefined;
+        picked = pick(options);
       }
     }
     if (!picked) picked = staticOptionUnder(scope, target);

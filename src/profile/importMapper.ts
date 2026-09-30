@@ -11,6 +11,7 @@ import type {
   ProjectEntry,
   SkillsProfile,
 } from "../types/profile";
+import { polarityOf } from "../rules/yesNoAnswers";
 
 /**
  * 简历母版 JSON → Profile 自适应映射（导入兜底）。
@@ -314,6 +315,10 @@ function mapBasic(root: Rec): BasicProfile {
   return {
     name: s(bi, ["姓名", "name"]),
     englishName: s(bi, ["英文名", "english_name", "englishName"]),
+    surname: s(bi, ["姓氏", "姓", "surname", "last_name", "lastName", "family_name"]),
+    givenName: s(bi, ["名字", "名", "given_name", "givenName", "first_name", "firstName"]),
+    linkedin: s(bi, ["领英", "领英主页", "linkedin", "linkedin_profile", "linkedinProfile"]),
+    github: s(bi, ["github", "GitHub", "代码仓库", "开源主页", "github_profile", "githubProfile"]),
     gender: s(bi, ["性别", "gender"]),
     birthDate: s(bi, ["出生日期", "birth_date", "birthDate", "birthday"]),
     age: s(bi, ["年龄", "age"]),
@@ -372,6 +377,11 @@ function mapSkills(root: Rec): SkillsProfile {
 
 function mapJobPreferences(root: Rec, bi: Rec): JobPreferences {
   const jp = firstRec(root, BLOCK_KEYS.jobPreferences);
+  /** 「是/否」偏好：中文母版可能写「是/否/可以/不接受」，统一收成「是」「否」或留空 */
+  const yesNo = (keys: string[]): string => {
+    const polarity = polarityOf(s(jp, keys));
+    return polarity === "yes" ? "是" : polarity === "no" ? "否" : "";
+  };
   return {
     // 意向岗位：中文「期望岗位」直取优先，其次三档优先级 + 求职意向，全部保留顺序去重
     expectedPosition: dedupe([
@@ -390,6 +400,11 @@ function mapJobPreferences(root: Rec, bi: Rec): JobPreferences {
     expectedIndustry: asTermList(
       jp["期望行业"] ?? jp.expected_industry ?? jp.expectedIndustry ?? jp.industry,
     ).join("、"),
+    acceptOfflineInterview: yesNo(["是否接受线下面试", "线下面试", "acceptOfflineInterview", "accept_offline_interview"]),
+    acceptOnlineInterview: yesNo(["是否接受线上面试", "线上面试", "acceptOnlineInterview", "accept_online_interview"]),
+    acceptBusinessTrip: yesNo(["是否接受出差", "出差", "acceptBusinessTrip", "accept_business_trip"]),
+    acceptRelocation: yesNo(["是否接受异地", "异地", "外派", "acceptRelocation", "accept_relocation"]),
+    acceptOvertime: yesNo(["是否接受加班", "加班", "acceptOvertime", "accept_overtime"]),
   };
 }
 

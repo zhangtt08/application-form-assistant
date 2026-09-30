@@ -20,7 +20,11 @@ export function extractRawJobPage(): RawJobPage {
   //     + sd-foundation-heading（Moka 设计系统标题节点——2026-09 真机详情页的职位名在此，无 h1/.job-name）
   // 两者都做 2..60 长度过滤——职位列表大容器（textContent 超长）被长度过滤自然排除。
   const DETAIL_HEADING_SELECTOR =
-    '[class*="job-name" i], [class*="jobName" i], [class*="job-title" i], [class*="jobTitle" i], [class*="position-name" i], [class*="positionName" i], [data-testid*="job-name" i], [data-testid*="job-title" i], [class*="sd-foundation-heading" i]';
+    '[class*="job-name" i], [class*="jobName" i], [class*="job-title" i], [class*="jobTitle" i], ' +
+    '[class*="position-name" i], [class*="positionName" i], [data-testid*="job-name" i], [data-testid*="job-title" i], ' +
+    '[class*="sd-foundation-heading" i], ' +
+    // 真机 Lever 的职位名在 `<div class="posting-headline"><h2>Android Engineer - Experience</h2>`，页面没有 h1
+    '[class*="posting-headline" i], [class*="posting-title" i], [class*="app-title" i]';
 
   const collectTexts = (selector: string, exclude: string[]): string[] => {
     const out: string[] = [];
@@ -43,7 +47,16 @@ export function extractRawJobPage(): RawJobPage {
     .filter(Boolean)
     .slice(0, 5);
 
-  const logoAlts = Array.from(document.querySelectorAll('img[class*="logo" i], img[alt*="招聘"], img[alt*="校招"], header img[alt]'))
+  // Issue #009：og:title 是**这一页的标题**（Greenhouse 上就是职位名），不是公司名。
+  // 以前把它当 metaCompany 用，结果是 company=「Software Engineer, Data Platform」，
+  // 而 position 又因为「公司名不能当职位」的互斥规则被自己挤掉 → 岗位条两头都错。
+  const metaCompany =
+    metaContent('meta[name="company"]') || metaContent('meta[property="og:site_name"]') || metaContent('meta[name="application-name"]');
+
+  // 招聘站的 logo 常挂在 a/div.logo 里而不是 img 自己有 class（真机 Lever：`<a class="main-header-logo"><img alt="Spotify logo">`）
+  const logoAlts = Array.from(
+    document.querySelectorAll('img[class*="logo" i], [class*="logo" i] img, [class*="brand" i] img, header img[alt], a[href$="/"] img[alt]'),
+  )
     .map((img) => (img as HTMLImageElement).alt.trim())
     .filter((alt) => alt.length >= 2 && alt.length <= 30)
     .slice(0, 5);
@@ -71,10 +84,7 @@ export function extractRawJobPage(): RawJobPage {
     url: location.href,
     pageTitle: document.title ?? "",
     metaTitle: metaContent('meta[property="og:title"]') || metaContent('meta[name="title"]'),
-    metaCompany:
-      metaContent('meta[name="company"]') ||
-      metaContent('meta[property="og:site_name"]') ||
-      metaContent('meta[property="og:title"]'),
+    metaCompany,
     h1Texts,
     jobDetailTitles: jobDetailTitles.length > 0 ? jobDetailTitles : undefined,
     bodyText: (document.body?.innerText ?? "").slice(0, MAX_BODY_TEXT),

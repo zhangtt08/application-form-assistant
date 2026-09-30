@@ -98,6 +98,8 @@ test("点「忽略」的字段不写入，其余照常", async () => {
   await revealPreview(sidePanel);
   await sidePanel.locator(".field-card").first().waitFor({ timeout: 20000 });
 
+  // 已按资料填好的客观信息现在是一行紧凑条目，先展开再操作（忽略 / 定位都在展开后）
+  await card("姓名").click();
   await card("姓名").getByRole("button", { name: /忽略/ }).click();
   await sidePanel.getByRole("button", { name: /填写确认的|确认并填写/ }).click();
   await sidePanel.locator(".dialog .primary", { hasText: "确认填写" }).click();

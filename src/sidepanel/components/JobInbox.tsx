@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { filterInbox, listJobs } from "../../workspace/jobRepository";
 import type { JobRecord } from "../../workspace/types";
-import { JOB_STATUS_LABELS, INBOX_VIEW_FILTER, type InboxView } from "../../workspace/types";
+import { JOB_STATUS_LABELS, JOB_NEXT_STEP, INBOX_VIEW_FILTER, type InboxView } from "../../workspace/types";
 import { profileTypeLabel } from "../../job/profileTypes";
 
 const VIEWS: { key: InboxView; label: string }[] = [
@@ -92,8 +92,12 @@ export function JobInbox(p: {
               <span className="muted small">{profileTypeLabel(job.jobType)}</span>
             </div>
             <div className="job-card-foot muted small">
-              {relTime(job.updatedAt)}
-              {job.tags.length > 0 && ` · ${job.tags.join(" / ")}`}
+              <span>
+                {relTime(job.updatedAt)}
+                {job.tags.length > 0 && ` · ${job.tags.join(" / ")}`}
+              </span>
+              {/* 卡片整块可点，但看不出来「点了会怎样」——把下一步直接写在行尾 */}
+              <span className="job-card-go">{JOB_NEXT_STEP[job.status]} ›</span>
             </div>
           </button>
         ))}

@@ -142,8 +142,11 @@ function extractLocation(raw: RawJobPage): string {
 export class RuleBasedJobParser implements JobParser {
   async parse(input: RawJobPage): Promise<JobContext> {
     // Issue #002：company 先提取，position 候选可与公司名互斥（公司名不能当职位，反之亦然）
-    const { company, extraction } = extractCompanyV2(input);
-    const { position, extraction: positionExtraction } = extractPositionWithMetadata(input, { company });
+    const { company: companyRaw, extraction } = extractCompanyV2(input);
+    const { position, extraction: positionExtraction } = extractPositionWithMetadata(input, { company: companyRaw });
+    // Unknown > Wrong：公司名是岗位/团队字符串的片段时它不是公司名
+    // （真机回归：「Android开发工程师 - 移动OS」的 title 中段被当成公司名）。
+    const company = companyRaw && normalizeText(position).includes(normalizeText(companyRaw)) ? "" : companyRaw;
     const location = extractLocation(input);
     const jd = extractJdBody(input.bodyText);
 
@@ -172,7 +175,7 @@ export class RuleBasedJobParser implements JobParser {
       jobType,
       keywords: matchedKeywords,
       source: "captured",
-      ...(extraction ? { companyExtraction: extraction } : {}),
+      ...(company && extraction ? { companyExtraction: extraction } : {}),
       ...(positionExtraction ? { positionExtraction } : {}),
     };
   }

@@ -1,0 +1,51 @@
+{
+  "url": "https://hkex.wd3.myworkdayjobs.com/zh-CN/HKEXCareerPage",
+  "at": "2026-09-30T05:17:44.319Z",
+  "syntheticOnly": true,
+  "submittedClicked": false,
+  "steps": [
+    "sidepanel_ready",
+    "job_page_loaded",
+    "click_not_found(\"暑期实习\")",
+    "recognized_jd_page",
+    "fill_timeout"
+  ],
+  "extensionId": "lemicjglmigehcmghknmkceplmfpjeaf",
+  "pageTitle": "搜索职务",
+  "jobBarAfterJdRecognize": "未识别到岗位",
+  "jobBar": "未识别到岗位",
+  "summaryCells": [
+    "0",
+    "0",
+    "0"
+  ],
+  "errorBanner": "",
+  "fieldCards": 0,
+  "cardStatuses": [],
+  "formUrl": "https://hkex.wd3.myworkdayjobs.com/zh-CN/HKEXCareerPage",
+  "controls": {
+    "total": 1,
+    "filled": 0,
+    "unexplained": 0,
+    "empty": 1
+  },
+  "filledSample": [],
+  "unexplainedSample": [],
+  "emptySample": [
+    {
+      "label": "搜索职务或关键字",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    }
+  ],
+  "frameKinds": {
+    "main": 1,
+    "sub": 0
+  },
+  "pageFrames": [
+    "https://hkex.wd3.myworkdayjobs.com/zh-CN/HKEXCareerPage"
+  ],
+  "undoMarkers": 0,
+  "submitStillThere": 19
+}

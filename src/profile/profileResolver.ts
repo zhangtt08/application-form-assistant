@@ -25,6 +25,12 @@ export interface ResolveOptions {
   pack?: ProfilePack;
 }
 
+/** 「是否有 X 经历」这类是非题 → 依据哪一段条目的存在性推导（只在有条目时答「是」） */
+const DERIVED_PRESENCE_IDS: Record<string, "internships" | "projects"> = {
+  "internship.hasExperience": "internships",
+  "project.hasExperience": "projects",
+};
+
 /** 旧版 Profile 里这几项存在 sensitive 块，新字段为空时的回退来源 */
 const LEGACY_SENSITIVE_SOURCE: Partial<Record<string, keyof Profile["sensitive"]>> = {
   politicalStatus: "politicalStatus",
@@ -124,6 +130,20 @@ export function resolveValue(
     }
     if (value === undefined || value === "") return undefined;
     return { fieldId, value, variant: "plain", editable: false, sourceType: "fact" };
+  }
+
+  /**
+   * 「是否有实习经历 / 是否有项目经验」这类是非题：答案由资料库里**已存在的条目**推出。
+   *
+   * 只单向推导：有条目 → 「是」；条目为空 → 不回答（undefined）。
+   * 绝不因为库里暂时没录就答「否」——那是替用户做一个可能不实的声明，
+   * 而「没填」和「没有」是两回事。
+   */
+  const derived = DERIVED_PRESENCE_IDS[fieldId];
+  if (derived) {
+    return profile[derived].length > 0
+      ? { fieldId, value: "是", variant: "plain", editable: false, sourceType: "fact", sourcePath: `derived(${derived}.length>0)` }
+      : undefined;
   }
 
   // education.*

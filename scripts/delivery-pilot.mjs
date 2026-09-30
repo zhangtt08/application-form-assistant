@@ -8,7 +8,7 @@
  *  - 结果只落结构化事实（长度 / 命中 / status），不落用户可见正文
  *
  * 用法：
- *   node scripts/delivery-pilot.mjs <岗位页URL> [--apply "投递简历"] [--out 文件名]
+ *   node scripts/delivery-pilot.mjs <岗位页URL> [--apply "投递简历"] [--out 文件名] [--click "列表里的职位名"]
  */
 
 import { chromium } from "@playwright/test";
@@ -28,11 +28,19 @@ const out = (...args) => {
 const argv = process.argv.slice(2);
 const jobUrl = argv.find((a) => /^https?:\/\//.test(a));
 if (!jobUrl) {
-  out("用法: node scripts/delivery-pilot.mjs <岗位页URL> [--apply \"投递简历\"]");
+  out("用法: node scripts/delivery-pilot.mjs <岗位页URL> [--apply \"投递简历\"] [--click \"列表里的职位名\"]");
   process.exit(2);
 }
 const applyLabel = (() => {
   const i = argv.indexOf("--apply");
+  return i >= 0 ? argv[i + 1] : null;
+})();
+/**
+ * 有些站点（Workday / 各类列表页）的详情页只能从列表点进去，公开深链会被重定向回列表。
+ * `--click "文本"` 在识别岗位之前先点一次，模拟用户「从列表进详情」这一步。
+ */
+const clickLabel = (() => {
+  const i = argv.indexOf("--click");
   return i >= 0 ? argv[i + 1] : null;
 })();
 const nameSlug = (jobUrl.match(/[a-z0-9]+/gi) ?? []).slice(-2).join("-").toLowerCase();
@@ -42,7 +50,9 @@ const OUT_FILE = path.join(ROOT, "real-validation-results", "sessions", `deliver
 const SYNTH = {
   name: "_syn_赵合一",
   surname: "赵",
-  givenname: "合一",
+  givenName: "合一",
+  linkedin: "https://www.linkedin.com/in/syn-test",
+  github: "https://github.com/syn-test",
   englishName: "Syn Test",
   gender: "男",
   birthDate: "2002.03",
@@ -152,6 +162,8 @@ const profile = {
     availableDate: "2026.07",
     employmentType: "校招全职",
     expectedIndustry: "互联网",
+    // 姚记真实表单里有这道单选题，站点选项写成「可以接受 / 不接受」
+    acceptOfflineInterview: "是",
   },
   content: {
     selfIntroduction: { short: "", medium: "合成自我介绍：示例理工大学软件工程专业，AI 应用方向。", long: "" },
@@ -185,6 +197,7 @@ async function launch() {
       `--load-extension=${DIST}`,
       "--no-first-run",
       "--no-default-browser-check",
+      ...proxyArgs(),
     ],
   });
   let sw = context.serviceWorkers()[0];
@@ -195,6 +208,16 @@ async function launch() {
   if (!sw) throw new Error("扩展 service worker 未启动");
   const extensionId = new URL(sw.url()).host;
   return { context, extensionId };
+}
+
+/**
+ * Chromium 读 Windows 系统代理（注册表 127.0.0.1:7897）时会整站 ERR_PROXY_CONNECTION_FAILED，
+ * 而同一代理对显式 --proxy-server 和 curl 都是通的，所以这里把环境变量里的代理显式传给浏览器。
+ */
+function proxyArgs() {
+  if (process.env.AFA_NO_PROXY) return ["--no-proxy-server"];
+  const p = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || process.env.https_proxy || process.env.http_proxy;
+  return p ? [`--proxy-server=${p}`] : [];
 }
 
 function findChrome() {
@@ -336,12 +359,25 @@ function classify(rows) {
   await sidePanel.getByRole("button", { name: /开始识别|重新识别/ }).last().waitFor({ timeout: 30000 });
   report.steps.push("sidepanel_ready");
 
-  const page = await context.newPage();
+  let page = await context.newPage();
   await page.goto(jobUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForLoadState("networkidle", { timeout: 25000 }).catch(() => {});
   await page.waitForTimeout(3000);
   report.pageTitle = await page.title();
   report.steps.push("job_page_loaded");
+
+  if (clickLabel) {
+    const link = page.getByText(clickLabel, { exact: false }).first();
+    try {
+      await link.click({ timeout: 15000 });
+      await page.waitForLoadState("domcontentloaded", { timeout: 25000 }).catch(() => {});
+      await page.waitForTimeout(4000);
+      report.pageTitle = await page.title();
+      report.steps.push(`clicked_into("${clickLabel}")`);
+    } catch {
+      report.steps.push(`click_not_found("${clickLabel}")`);
+    }
+  }
 
   // ① 先在 JD 页识别一次：捕获岗位 + 方向（用户流程里的「识别岗位」）
   // 注意：扩展操作的是「当前活动标签页」，Side Panel 自己那个 tab 抢前台会让扫描目标变成面板页；
@@ -356,9 +392,20 @@ function classify(rows) {
   await page.bringToFront();
   if (applyLabel) {
     const btn = page.getByText(applyLabel, { exact: false }).first();
+    const tabsBefore = new Set(context.pages());
     if (await btn.count()) {
       await btn.click({ timeout: 10000 }).catch(() => {});
       await page.waitForTimeout(4000);
+      // Lever / 部分自建 ATS 的「Apply Now」是 target=_blank：
+      // 不切到新开的 tab，我们对着岗位 JD 页扫描，会误报成「识别不到字段」。
+      const opened = context.pages().filter((p) => !tabsBefore.has(p) && p !== sidePanel);
+      const last = opened[opened.length - 1];
+      if (last) {
+        await last.waitForLoadState("domcontentloaded", { timeout: 25000 }).catch(() => {});
+        await last.waitForTimeout(2500);
+        page = last;
+        report.steps.push("apply_opened_new_tab");
+      }
       report.steps.push(`clicked_apply("${applyLabel}")`);
     } else {
       report.steps.push(`apply_not_found("${applyLabel}")`);

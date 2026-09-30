@@ -7,7 +7,7 @@
 做法：
     1. 起一个本地静态服务指向 dist/（ES module 在 file:// 下会被 CORS 拦掉）；
     2. 注入 chrome API 桩（storage / tabs / runtime），喂一份示例资料；
-    3. mock 掉 content script 的 SCAN_PAGE / CAPTURE_JOB / FILL_FIELDS 响应；
+    3. mock 掉 content script 的 SCAN_TARGET / CAPTURE_TARGET / FILL_TARGET 响应；
     4. 依次走「开始识别 → 投递 → 确认填写 → 资料导入 → 设置」，逐步截图。
 
 用法（改完代码先构建，再跑）：
@@ -207,7 +207,14 @@ STUB = """(() => {
   const changed = [];
 
   function handleTabMessage(msg) {
-    switch (msg && msg.type) {
+    // Side Panel 现在走按 frame 路由的 *_TARGET 消息（Background 再分发给具体 frame），
+    // 桩件把它映射回原来的处理分支 —— 否则每个请求都落到 unmocked，识别永远出不来结果。
+    const ALIAS = {
+      SCAN_TARGET: 'SCAN_PAGE', FILL_TARGET: 'FILL_FIELDS', UNDO_TARGET: 'UNDO_FILL',
+      LOCATE_TARGET: 'LOCATE_FIELD', CAPTURE_TARGET: 'CAPTURE_JOB',
+    };
+    const type = ALIAS[msg && msg.type] || (msg && msg.type);
+    switch (type) {
       case 'PING': return { ok: true };
       case 'CAPTURE_JOB': return { ok: true, raw: __JOB__ };
       case 'SCAN_PAGE': return { ok: true, fields: __FIELDS__ };
@@ -257,7 +264,10 @@ STUB = """(() => {
         if (msg && msg.type === 'ENSURE_CONTENT_SCRIPT') {
           return { ok: true, url: 'https://jobs.example.com/job/ai-pm-12345' };
         }
-        return { ok: true };
+        // 面板现在通过 runtime.sendMessage 找 Background 路由器（Background 再按 frame 分发），
+        // 桩件必须接在这个入口上 —— 以前 mock 挂在 tabs.sendMessage 上，于是每个请求都只拿到 { ok: true }，
+        // 页面显示「识别失败：未知错误」而没人发现冒烟测试其实没在测识别。
+        return handleTabMessage(msg);
       },
       getURL: (p) => p,
       lastError: undefined,
@@ -331,19 +341,23 @@ def main() -> int:
 
         # 识别 → 投递（Scan 只读：这一步之后页面还没被写，字段清单也还是收起的）
         page.get_by_role("button", name="开始识别").click()
-        page.wait_for_selector(".summary", timeout=15000)
-        page.wait_for_timeout(400)
+        try:
+            page.wait_for_selector(".summary", timeout=15000)
+        except Exception:  # noqa: BLE001
+            # 失败要能诊断：只甩 traceback 看不到面板到底停在哪一步
+            print("PANEL TEXT >>>", page.inner_text("body")[:1500])
+            raise
         shot("02-apply")
         print("SUMMARY >>>", " | ".join(x.strip() for x in page.inner_text(".summary").split("\n") if x.strip()))
         print("BANNER >>>", page.locator(".banner").all_inner_texts())
         print("STEPPER >>>", " / ".join(x.strip() for x in page.inner_text(".stepper").split("\n") if x.strip()))
         print("JOBBAR-SUB >>>", page.inner_text(".jobbar-sub").replace("\n", " "))
-        if page.locator(".field-list").count() != 0:
-            problems.append("Scan 之后就渲染出字段清单了：预览应当默认收起")
-
-        # 查看填写预览 → 逐字段 Review
-        page.get_by_role("button", name="查看填写预览").click()
+        # 当前设计：识别完成后字段明细就地渲染（按状态分桶折叠）；
+        # 只有「没有可自动填写的项」时才需要点「查看填写预览」。
+        if page.locator(".field-list").count() == 0:
+            page.get_by_role("button", name="查看填写预览").click()
         page.wait_for_selector(".field-list", timeout=10000)
+        page.wait_for_timeout(300)
         page.wait_for_timeout(300)
         print("FOLDS >>>", page.locator(".fold-head").all_inner_texts())
         print("CARDS >>>", page.locator(".field-card").count())
@@ -364,23 +378,26 @@ def main() -> int:
         print("JOBBAR ACTIVE LIB >>>", page.locator(".jobbar .libbar .chip.active").inner_text())
         page.get_by_role("button", name="收起").click()
 
-        # 确认框 → 写入 → 完成
-        primary = page.locator(".summary-actions button.primary")
-        print("PRIMARY BTN >>>", primary.inner_text(), "| disabled:", primary.is_disabled())
-        primary.click()
-        page.wait_for_selector(".dialog", timeout=10000)
-        page.wait_for_timeout(300)
-        shot("06-confirm", full=False)
-        print("DIALOG ITEMS >>>", page.locator(".confirm-item").count())
-        print("DIALOG >>>", page.inner_text(".dialog").replace("\n", " | "))
-        page.get_by_role("button", name="确认填写").click()
+        # 当前契约：识别完成后直接写入，不再有「确认填写」弹窗。
+        # 冒烟因此改测这条链上真实存在的两个动作：撤销、重新识别。
         page.wait_for_selector(".banner-ok:has-text('填写完成')", timeout=15000)
+        print("AUTOFILL BANNER >>>", page.inner_text(".banner-ok").replace(chr(10), " | "))
+        shot("06-filled", full=False)
+        primary = page.locator(".summary-actions button.primary")
+        print("PRIMARY BTN >>>", primary.inner_text())
+        page.get_by_role("button", name="撤销本次填写").click()
+        page.wait_for_selector(".banner", timeout=15000)
+        page.wait_for_timeout(400)
+        print("UNDO BANNER >>>", page.locator(".banner").all_inner_texts())
+        shot("07-undone", full=False)
         page.wait_for_timeout(400)
         shot("07-done")
         print("AFTER FILL >>>", " | ".join(x.strip() for x in page.inner_text(".summary").split("\n") if x.strip()))
 
         # 资料页：资料库切换器 + 纯文本导入
         page.get_by_role("button", name="资料").click()
+        # 已有资料时「导入简历」默认收起（用户进这页是来改字段的）；先看它是否摊开
+        page.locator(".import-fold").first.evaluate("el => { el.open = true }")
         page.wait_for_selector(".import-panel", timeout=10000)
         page.wait_for_timeout(300)
         print("PROFILE LIB CHIPS >>>", page.locator(".libbar .chip").all_inner_texts())
@@ -429,6 +446,10 @@ def main() -> int:
         if opage.locator(".hero-btn.ghost").count() != 1:
             problems.append("空资料状态下「开始识别」没有降级为次要按钮")
         opage.get_by_role("button", name="导入我的简历").click()
+        try:
+            opage.locator(".import-fold").first.evaluate("el => { el.open = true }")
+        except Exception:  # noqa: BLE001
+            pass  # 空资料时面板本来就是摊开的
         opage.wait_for_selector(".import-panel", timeout=10000)
         octx.close()
 

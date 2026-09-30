@@ -12,6 +12,7 @@ import type {
   SkillsProfile,
 } from "../types/profile";
 import { PROFILE_TYPES, type ProfileType } from "../job/profileTypes";
+import { YES_NO_PREFERENCE_KEYS } from "../types/profile";
 import { cloneProfile, defaultProfile } from "./defaultProfile";
 import { validateProfile } from "./schema";
 import { LogEvent, logger } from "../utils/logger";
@@ -269,6 +270,11 @@ export function repairProfileShape(input: unknown): Profile {
       availableDate: str(rec(src.jobPreferences).availableDate),
       employmentType: str(rec(src.jobPreferences).employmentType),
       expectedIndustry: str(rec(src.jobPreferences).expectedIndustry),
+      // 「是否…」偏好是增量字段：这里漏带过，用户在资料页答过的答案就会在读盘时被抹掉，
+      // 表现成「库里明明选了『是』，网站却还是空的」（少填）。
+      ...Object.fromEntries(
+        YES_NO_PREFERENCE_KEYS.map((key) => [key, str(rec(src.jobPreferences)[key])]),
+      ),
     } as JobPreferences,
     ...(rec(src.careerPreferences).targetDirections !== undefined
       ? {

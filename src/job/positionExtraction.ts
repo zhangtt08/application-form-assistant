@@ -93,8 +93,13 @@ const RECRUITING_WORD_EXACT =
 /** 明显 JD 段落标记：候选含这些 = 抓到的是正文段落不是标题 */
 const JD_PARAGRAPH_MARKERS = /岗位职责|任职要求|职位描述|工作职责|岗位要求|job description|responsibilities|requirements/i;
 
-/** 句子级标点：职位标题里不该出现（出现即段落/标签+值的可能性大） */
-const SENTENCE_PUNCTUATION = /[，。；！？,;!?：:]/;
+/**
+ * 句子级标点：职位标题里不该出现（出现即段落/标签+值的可能性大）。
+ * 半角逗号**不在其中**：真机 Greenhouse 的 `<h1>` 就是「Software Engineer, Data Platform」，
+ * 「职位, 团队/方向」是英文 ATS 的常规写法，把它当段落会让整个岗位识别退化成「未识别岗位」。
+ * 中文逗号仍然拦（真机里带「，」的候选是句子，如「负责 3C 品类的载具策划，产出玩法设计方案」）。
+ */
+const SENTENCE_PUNCTUATION = /[，。；！？;!?：:]/;
 
 /** 公司样结尾：以「公司/集团」等结尾的候选是公司名不是职位名 */
 const COMPANY_LIKE_ENDING = /(有限公司|股份公司|集团公司|控股集团|有限公司|公司|集团|股份)$/;

@@ -8,6 +8,12 @@ import { profileTypeLabel, type ProfileType } from "../../job/profileTypes";
 export interface FieldCardProps {
   candidate: CandidateField;
   devMode: boolean;
+  /**
+   * 紧凑一行（label + 值 + 状态）。
+   * 「已按资料库填好」的那批字段不需要每张卡占 150px —— 420px 宽的侧边栏里
+   * 14 张卡就是 2000px 滚动，用户看完不知道重点在哪。点开才展开完整卡片。
+   */
+  compact?: boolean;
   onToggleConfirm: (reference: string) => void;
   onEditValue: (reference: string, value: string) => void;
   onVariantChange: (reference: string, variant: "short" | "medium" | "long") => void;
@@ -169,6 +175,7 @@ export function FieldCard(props: FieldCardProps) {
   const { candidate, devMode } = props;
   const { raw, match, risk, status } = candidate;
   const [showEvidence, setShowEvidence] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const statusInfo = STATUS_TEXT[status];
   // 内容框：主观/长文本类字段即使已经写入也允许就地改后重写（改完不回写资料库）
@@ -204,6 +211,29 @@ export function FieldCard(props: FieldCardProps) {
     }
   };
 
+  // 紧凑一行：已按资料库填好的客观信息只需要「哪个字段、填了什么、内容从哪来」。
+  // 点开才看完整卡片（编辑、定位、调试信息）。
+  if (props.compact && !expanded) {
+    return (
+      <button
+        type="button"
+        className="field-card field-line"
+        data-status={status}
+        data-field-id={match.fieldId}
+        onClick={() => setExpanded(true)}
+        aria-label={`展开这一项：${labelOf(raw)}`}
+        title="点开查看 / 修改这一项"
+      >
+        <span className={`line-dot dot-${status}`} aria-hidden="true" />
+        <span className="field-label line-label">{labelOf(raw)}</span>
+        <span className="line-value">{displayValue || "—"}</span>
+        {sourceBadge && <span className={`source-badge ${sourceBadge.cls}`}>{sourceBadge.text}</span>}
+        {devMode && <span className="line-id">{match.fieldId}</span>}
+        <span className="line-open">展开</span>
+      </button>
+    );
+  }
+
   return (
     <div className={cardCls} data-status={status} data-field-id={match.fieldId}>
       <div className="field-head">
@@ -212,6 +242,12 @@ export function FieldCard(props: FieldCardProps) {
         </div>
         <RiskBadge risk={manualLike ? "MANUAL_ONLY" : risk} />
       </div>
+
+      {props.compact && (
+        <button type="button" className="line-collapse" onClick={() => setExpanded(false)}>
+          收起
+        </button>
+      )}
 
       {status === "failed" && candidate.fillDetail && (
         <p className="hint">没填进去：{candidate.fillDetail}</p>
@@ -257,13 +293,19 @@ export function FieldCard(props: FieldCardProps) {
                 </>
               )}
               <span className="field-meta-sep">·</span>
-              <span className="field-meta-id" data-field-id={match.fieldId}>
-                {match.fieldId === "unknown" ? "未匹配到资料" : match.fieldId}
-                {candidate.value && candidate.value.entryCount && candidate.value.entryCount > 1
-                  ? `（第${(candidate.value.entryIndex ?? 0) + 1}/${candidate.value.entryCount}条）`
-                  : ""}
-              </span>
-              <ConfidenceBadge confidence={match.confidence} />
+              {/* canonical id 与百分比置信度是开发者视角的东西：普通用户看到 basic.name / 99%
+                  只会更困惑。需要时到「设置 → 开发者模式」打开。 */}
+              {devMode && (
+                <>
+                  <span className="field-meta-id" data-field-id={match.fieldId}>
+                    {match.fieldId === "unknown" ? "未匹配到资料" : match.fieldId}
+                    {candidate.value && candidate.value.entryCount && candidate.value.entryCount > 1
+                      ? `（第${(candidate.value.entryIndex ?? 0) + 1}/${candidate.value.entryCount}条）`
+                      : ""}
+                  </span>
+                  <ConfidenceBadge confidence={match.confidence} />
+                </>
+              )}
               {lengthInfo && (
                 <>
                   <span className="field-meta-sep">·</span>

@@ -1,0 +1,44 @@
+{
+  "url": "https://www.zhipin.com/c101020100/?query=Java",
+  "at": "2026-09-30T06:18:06.296Z",
+  "syntheticOnly": true,
+  "submittedClicked": false,
+  "steps": [
+    "sidepanel_ready",
+    "job_page_loaded",
+    "click_not_found(\"工程师\")",
+    "recognized_jd_page",
+    "fill_timeout"
+  ],
+  "extensionId": "lemicjglmigehcmghknmkceplmfpjeaf",
+  "pageTitle": "",
+  "jobBarAfterJdRecognize": "未识别到岗位",
+  "jobBar": "未识别到岗位",
+  "summaryCells": [
+    "0",
+    "0",
+    "0"
+  ],
+  "errorBanner": "",
+  "fieldCards": 0,
+  "cardStatuses": [],
+  "formUrl": "about:blank",
+  "controls": {
+    "total": 0,
+    "filled": 0,
+    "unexplained": 0,
+    "empty": 0
+  },
+  "filledSample": [],
+  "unexplainedSample": [],
+  "emptySample": [],
+  "frameKinds": {
+    "main": 0,
+    "sub": 0
+  },
+  "pageFrames": [
+    "about:blank"
+  ],
+  "undoMarkers": 0,
+  "submitStillThere": 0
+}

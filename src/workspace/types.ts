@@ -38,6 +38,24 @@ export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
   archived: "已归档",
 };
 
+/**
+ * 岗位卡片上「点进去要做什么」的一句话。
+ * 整张卡片本来就可点，但看不出来点了会怎样 —— 把下一步写在行尾，
+ * 用户不必先猜「这是个列表项还是按钮」。
+ */
+export const JOB_NEXT_STEP: Record<JobStatus, string> = {
+  saved: "开始申请",
+  preparing: "继续准备",
+  applying: "继续填写",
+  submitted: "查看进度",
+  assessment: "去笔试",
+  interview: "看面试",
+  offer: "查看 Offer",
+  rejected: "查看记录",
+  withdrawn: "查看记录",
+  archived: "查看记录",
+};
+
 /** Inbox 视图（spec 第六章） */
 export type InboxView = "all" | "pending" | "applying" | "submitted" | "followup" | "closed";
 

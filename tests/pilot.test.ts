@@ -228,12 +228,13 @@ describe("Dry Run", () => {
 // ---------- Known Limitations ----------
 
 describe("Known Limitation Registry", () => {
-  it("environment 命中：iframe/shadow/custom select", () => {
+  it("只有认不出结构的自定义下拉仍按环境提示；iframe 与日期已不再是「不支持」", () => {
     const hits = KNOWN_LIMITATIONS.filter((k) =>
-      k.matches({ sameOriginIframeCount: 1, crossOriginIframeCount: 0, shadowRootCount: 0, customSelectCount: 3 }),
+      k.matches({ sameOriginIframeCount: 1, crossOriginIframeCount: 1, shadowRootCount: 0, customSelectCount: 3 }),
     );
-    expect(hits.some((h) => h.code === "SAME_ORIGIN_IFRAME_CROSS_FRAME_FILL")).toBe(true);
-    expect(hits.some((h) => h.code === "UNKNOWN_CUSTOM_SELECT")).toBe(true);
+    // iframe 按 frame 路由填写（同源 + 跨域都由 all_frames 注入）、日期走站点日历格子点击，
+    // 这两类已经不是能力缺口 —— 再把它们报成「需人工」就是给交付文档撒谎。
+    expect(hits.map((h) => h.code)).toEqual(["UNKNOWN_CUSTOM_SELECT"]);
   });
 
   it("无特殊环境 → 无限制提示", () => {

@@ -3,6 +3,18 @@ import type { ValueVariant } from "./field";
 export interface BasicProfile {
   name: string;
   englishName: string;
+  /**
+   * 英文 ATS（Greenhouse / Lever / Workday）几乎都把姓名拆成 First name + Last name，
+   * 中文站用整名「姓名」。只填 name 的话，那些拆分字段就永远识别不到值（少填）。
+   * 因此库里单独存姓 / 名两段，由用户自己填 —— 扩展绝不把「赵合一」自作主张拆成「赵 / 合一」
+   * （复姓、少数民族姓名、中英混排都会拆错）。
+   */
+  surname?: string;
+  givenName?: string;
+  /** 领英主页：英文站高频字段，与「个人主页 / portfolio」是两个来源 */
+  linkedin?: string;
+  /** GitHub 主页：技术岗网申的标配字段，同样与 portfolio 分开存 */
+  github?: string;
   gender: string;
   birthDate: string;
   age: string;
@@ -153,7 +165,28 @@ export interface JobPreferences {
   availableDate: string;
   employmentType: string;
   expectedIndustry: string;
+  /**
+   * 网申里高频的「是否…」单选题（是否接受线下面试 / 出差 / 异地…）。
+   * 这些是**可记录的偏好**，不是承诺或授权：用户在资料库答一次，之后所有表单复用。
+   * 值为 "是" / "否" / ""（空 = 还没记录过，识别到也不会瞎猜）。
+   */
+  acceptOfflineInterview?: string;
+  acceptOnlineInterview?: string;
+  acceptBusinessTrip?: string;
+  acceptRelocation?: string;
+  acceptOvertime?: string;
 }
+
+/** 「是否…」偏好键（schema 补全、资料页表单、默认值共用同一份来源） */
+export const YES_NO_PREFERENCE_KEYS = [
+  "acceptOfflineInterview",
+  "acceptOnlineInterview",
+  "acceptBusinessTrip",
+  "acceptRelocation",
+  "acceptOvertime",
+] as const;
+
+export type YesNoPreferenceKey = (typeof YES_NO_PREFERENCE_KEYS)[number];
 
 export interface LongTextBlock {
   short: string;

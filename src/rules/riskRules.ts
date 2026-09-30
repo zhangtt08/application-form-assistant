@@ -1,4 +1,5 @@
 import type { RiskLevel } from "../types/field";
+import { YES_NO_PREFERENCE_KEYS } from "../types/profile";
 import { normalizeText } from "../utils/normalizeText";
 
 /**
@@ -29,6 +30,9 @@ const MANUAL_ONLY_KEYWORDS: string[] = [
   "背景调查", "背调", "犯罪", "案底", "criminal", "background check",
   "sponsorship", "工作许可", "work authorization", "right to work", "visa",
 ];
+
+/** 「是否…」偏好题的 canonical id（与 JobPreferences 的增量键同源） */
+const YES_NO_PREFERENCE_IDS = new Set(YES_NO_PREFERENCE_KEYS.map((k) => `job.${k}`));
 
 /** REVIEW 级 canonical id：内容可自动准备，但必须逐项确认 */
 const REVIEW_FIELD_IDS = new Set([
@@ -122,13 +126,22 @@ export function riskOfFieldId(fieldId: string): RiskAssessment {
     fieldId === "project.name" ||
     fieldId === "project.role" ||
     fieldId === "project.startDate" ||
-    fieldId === "project.endDate"
+    fieldId === "project.endDate" ||
+    /** 「是否有实习/项目经验」：由库里已存在的条目推出，是事实陈述，不是主观表达 */
+    fieldId === "internship.hasExperience" ||
+    fieldId === "project.hasExperience"
   ) {
     return { risk: "SAFE", reason: "客观事实类字段" };
   }
+  /**
+   * 「是否…」偏好（job.acceptXxx）：资料库里存的就是用户自己选的「是 / 否」，
+   * 与期望薪资那种「要挑一下措辞」的内容不同，直接按库里的答案勾选即可，不需要逐项确认。
+   */
+  if (YES_NO_PREFERENCE_IDS.has(fieldId)) {
+    return { risk: "SAFE", reason: "资料库里已记录的偏好答案" };
+  }
   return { risk: "REVIEW", reason: "未归类字段：保守处理为需确认" };
 }
-
 /** 组合评估：文本关键词优先，其次 canonical id */
 export function assessRisk(
   fieldId: string,

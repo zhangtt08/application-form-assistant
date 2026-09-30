@@ -101,6 +101,21 @@
       <label><input type="radio" name="transfer" value="yes">是</label>
       <label><input type="radio" name="transfer" value="no">否</label>
     </div>
+    <!-- 站点把「是/否」写成「可以接受 / 不接受」：真实网申的常见形态，
+         写入层必须按同极性选中正确那一项，而不是「不接受」（含「接受」二字） -->
+    <div class="row" id="offline-row">
+      <span class="label">是否接受线下面试</span>
+      <label><input type="radio" name="offline" value="ok">可以接受</label>
+      <label><input type="radio" name="offline" value="no">不接受</label>
+    </div>
+    <!-- 「是否有实习经历」：答案由资料库里已存在的经历条目单向推出（有条目=是；没录≠否） -->
+    <div class="row" id="internship-exp-row">
+      <span class="label">是否有实习经历</span>
+      <label><input type="radio" name="hasintern" value="yes">是</label>
+      <label><input type="radio" name="hasintern" value="no">否</label>
+    </div>
+    <!-- 「推荐人姓名」里含「姓名」：绝不能把应聘者自己的名字填进别人的字段（真机错填形态） -->
+    <div class="row"><label for="f-referrer">推荐人姓名</label><input type="text" id="f-referrer"></div>
     <div class="row"><label for="f-sign">电子签名</label><input type="text" id="f-sign"></div>
   </section>
 

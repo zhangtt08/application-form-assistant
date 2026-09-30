@@ -1,0 +1,45 @@
+{
+  "url": "https://jobs.bytedance.com/campus/position/7667881533285566725/detail",
+  "at": "2026-09-30T04:47:13.101Z",
+  "syntheticOnly": true,
+  "submittedClicked": false,
+  "steps": [
+    "sidepanel_ready",
+    "job_page_loaded",
+    "recognized_jd_page",
+    "fill_timeout"
+  ],
+  "extensionId": "lemicjglmigehcmghknmkceplmfpjeaf",
+  "pageTitle": "Android开发工程师 - 移动OS - 字节跳动",
+  "jobBarAfterJdRecognize": "字节跳动 · Android开发工程师 - 移动OS",
+  "jobBar": "字节跳动 · Android开发工程师 - 移动OS",
+  "summaryCells": [
+    "0",
+    "0",
+    "0"
+  ],
+  "errorBanner": "",
+  "fieldCards": 0,
+  "cardStatuses": [],
+  "formUrl": "https://jobs.bytedance.com/campus/position/7667881533285566725/detail",
+  "controls": {
+    "total": 0,
+    "filled": 0,
+    "unexplained": 0,
+    "empty": 0
+  },
+  "filledSample": [],
+  "unexplainedSample": [],
+  "emptySample": [],
+  "frameKinds": {
+    "main": 0,
+    "sub": 0
+  },
+  "pageFrames": [
+    "https://jobs.bytedance.com/campus/position/7667881533285566725/detail",
+    "about:blank",
+    "about:blank"
+  ],
+  "undoMarkers": 0,
+  "submitStillThere": 11
+}

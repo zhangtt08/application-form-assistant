@@ -19,10 +19,11 @@ export const IGNORE_KEYWORDS: string[] = [
   "upload", "附件", "上传",
 ];
 
-/** 单选/复选组常见法律选项：即使识别也不能替用户勾选 */
-export const MANUAL_ONLY_OPTION_TEXTS: string[] = [
-  "我已阅读", "本人已阅读", "同意", "我同意", "已知晓", "接受", "agree", "i agree", "已阅读并同意",
-];
+/**
+ * 单选/复选组的法律文本选项不在这里拦截：
+ * 承诺/同意类由 riskRules 按标签与题干文字判定 MANUAL_ONLY（单一判定来源），
+ * 否则同名选项出现在普通单选题（如「是否接受线下面试 → 接受」）会被误杀。
+ */
 
 export function isIgnoredByKeyword(text: string): boolean {
   const norm = text.toLowerCase();

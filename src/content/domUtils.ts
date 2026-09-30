@@ -1,5 +1,10 @@
 /** DOM 工具：可见性、label 关联、指纹、指纹反查 */
 
+import { polarityMatches } from "../rules/yesNoAnswers";
+
+/** 「是/否」答案的同极性写法：选项匹配与写入回读共用同一份判定（见 yesNoAnswers 注释） */
+export { polarityMatches };
+
 /**
  * realm-safe 控件判定。
  * same-origin iframe 里的元素属于子文档的 realm，`el instanceof HTMLInputElement`
@@ -548,6 +553,11 @@ export function valueMatchesRequested(el: HTMLElement, requested: string): boole
     const nd = normalizeDate(requested);
     if (nd && normalizeDate(actual) === nd) return true;
   }
+  // 「是/否」答案写进了「可以接受 / 不接受」这样的选项：属于填对了。
+  // 只对选择类控件开放，文本框必须精确相等，否则「不接受」会被当成「接受」报成功。
+  const choiceLike =
+    isRadioElement(el) || isCheckboxElement(el) || isSelectElement(el) || isCustomSelectElement(el);
+  if (choiceLike && polarityMatches(requested, actual)) return true;
   // 自定义下拉/单选的显示文本常带注释（「本科（普通全日制）」「杭州市」），
   // 只有这类控件允许包含式判定；普通文本框必须精确相等，否则会把写错的值报成成功。
   const displayLike = isCustomSelectElement(el) || isRadioElement(el) || isSelectElement(el);

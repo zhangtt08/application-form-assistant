@@ -203,7 +203,7 @@ test("AA12: Mutation loop → 写入后 observer 不触发无限 rescan", async 
 
 test("AA13: number 年份框收不下 2027.06 → 按数字框取年份写入，且不误伤同页其他控件（issue-003）", async () => {
   const page = await scanFixture("number-year-field.html");
-  const yearCard = sidePanel.locator('.field-card:has([data-field-id="education.endDate"])');
+  const yearCard = sidePanel.locator('.field-card[data-field-id="education.endDate"]');
   await expect(yearCard).toHaveCount(1);
 
   await confirmAndFill();

@@ -1,0 +1,44 @@
+{
+  "url": "https://jobs.51job.com/campus/caCGxRMFAxBD1WMgFmAWM.html",
+  "at": "2026-09-30T04:23:35.003Z",
+  "syntheticOnly": true,
+  "submittedClicked": false,
+  "steps": [
+    "sidepanel_ready",
+    "job_page_loaded",
+    "recognized_jd_page",
+    "fill_timeout"
+  ],
+  "extensionId": "lemicjglmigehcmghknmkceplmfpjeaf",
+  "pageTitle": "滑动验证页面",
+  "jobBarAfterJdRecognize": "未识别到岗位",
+  "jobBar": "未识别到岗位",
+  "summaryCells": [
+    "0",
+    "0",
+    "0"
+  ],
+  "errorBanner": "",
+  "fieldCards": 0,
+  "cardStatuses": [],
+  "formUrl": "https://jobs.51job.com/campus/caCGxRMFAxBD1WMgFmAWM.html",
+  "controls": {
+    "total": 0,
+    "filled": 0,
+    "unexplained": 0,
+    "empty": 0
+  },
+  "filledSample": [],
+  "unexplainedSample": [],
+  "emptySample": [],
+  "frameKinds": {
+    "main": 0,
+    "sub": 0
+  },
+  "pageFrames": [
+    "https://jobs.51job.com/campus/caCGxRMFAxBD1WMgFmAWM.html",
+    "about:blank"
+  ],
+  "undoMarkers": 0,
+  "submitStillThere": 2
+}

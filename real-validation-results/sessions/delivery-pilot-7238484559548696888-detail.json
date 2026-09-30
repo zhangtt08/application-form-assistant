@@ -1,0 +1,45 @@
+{
+  "url": "https://jobs.bytedance.com/campus/position/7238484559548696888/detail",
+  "at": "2026-09-30T02:40:40.297Z",
+  "syntheticOnly": true,
+  "submittedClicked": false,
+  "steps": [
+    "sidepanel_ready",
+    "job_page_loaded",
+    "recognized_jd_page",
+    "fill_timeout"
+  ],
+  "extensionId": "lemicjglmigehcmghknmkceplmfpjeaf",
+  "pageTitle": "后端开发实习生-今日头条 - 字节跳动",
+  "jobBarAfterJdRecognize": "未识别到岗位",
+  "jobBar": "未识别到岗位",
+  "summaryCells": [
+    "0",
+    "0",
+    "0"
+  ],
+  "errorBanner": "",
+  "fieldCards": 0,
+  "cardStatuses": [],
+  "formUrl": "https://jobs.bytedance.com/campus/position/7238484559548696888/detail",
+  "controls": {
+    "total": 0,
+    "filled": 0,
+    "unexplained": 0,
+    "empty": 0
+  },
+  "filledSample": [],
+  "unexplainedSample": [],
+  "emptySample": [],
+  "frameKinds": {
+    "main": 0,
+    "sub": 0
+  },
+  "pageFrames": [
+    "https://jobs.bytedance.com/campus/position/7238484559548696888/detail",
+    "about:blank",
+    "about:blank"
+  ],
+  "undoMarkers": 0,
+  "submitStillThere": 11
+}

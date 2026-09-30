@@ -31,6 +31,9 @@ const ALLOWED = new Set([
   "100000002",
   "https://example.com/portfolio",
   "https://example.org/profile",
+  // 2026-09-29 新增的 GitHub 栏：本会话自己写的合成账号（syn-* 前缀），与上面同一类
+  "https://github.com/syn-test",
+  "https://github.com/syn-zhangsan",
 ]);
 
 /** RFC 2606 / 保留域：测试邮箱一律走这些，其余按疑似真实处理 */

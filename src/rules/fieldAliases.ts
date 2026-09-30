@@ -19,6 +19,26 @@ export const FIELD_ALIASES: Record<string, string[]> = {
     "英文名", "英文姓名", "英文名称", "英文",
     "english name", "name in english", "english",
   ],
+  /**
+   * 姓名拆分：英文 ATS（Greenhouse / Lever / Workday / Workable）一律 First name + Last name。
+   * 只写「first name」这类完整词组，不写「name」这种被无数标签包含的词。
+   */
+  "basic.surname": [
+    "姓氏", "您的姓氏", "家族姓氏",
+    "last name", "lastname", "family name", "surname", "sur name",
+  ],
+  "basic.givenName": [
+    "名字（不含姓）", "单名", "名（不含姓氏）",
+    "first name", "firstname", "given name", "givenname", "forename", "first name (given name)",
+  ],
+  "basic.linkedin": [
+    "领英", "领英主页", "领英链接", "领英个人资料",
+    "linkedin", "linkedin profile", "linkedin url", "linked in", "lnkd",
+  ],
+  "basic.github": [
+    "github", "github url", "github profile", "github 主页", "github 链接",
+    "代码仓库", "开源仓库", "开源主页", "个人仓库",
+  ],
   "basic.gender": [
     "性别", "男女", "您的性别", "性别（男/女）",
     "gender", "sex",
@@ -56,6 +76,7 @@ export const FIELD_ALIASES: Record<string, string[]> = {
   "basic.city": [
     "所在城市", "居住城市", "现居城市", "现居地", "所在地区", "城市", "所在地",
     "常驻城市", "居住地", "现居住地", "当前城市", "所在省市",
+    "current location", "current city", "city", "where are you based", "based in", "location of residence",
     "city", "location", "current city", "living city", "base city", "resident city",
   ],
   "basic.address": [
@@ -142,6 +163,16 @@ export const FIELD_ALIASES: Record<string, string[]> = {
     "rank", "class rank", "ranking",
   ],
 
+  /**
+   * 「是否有实习经历」是非题。别名一律写成**完整问句**：
+   * 「实习经历」这种裸名词会是textarea「请描述你的实习经历」的标签，
+   * 命中后会把「是」塞进描述框 —— 那是错填，不是少填。
+   */
+  "internship.hasExperience": [
+    "是否有实习经历", "是否有实习经验", "是否有过实习经历", "是否有过实习", "是否有相关实习经历",
+    "是否有实习", "是否参加过实习", "有无实习经历", "是否有工作经历", "是否有工作经验",
+    "是否有相关工作经验", "是否具备相关工作经验", "do you have internship experience", "have you completed an internship",
+  ],
   "internship.company": [
     "实习公司", "实习单位", "实习企业", "公司名称", "公司", "单位名称", "工作单位",
     "实习公司名称", "实习单位名称", "就职单位", "就职公司", "用人单位", "工作单位名称", "实习机构",
@@ -174,6 +205,8 @@ export const FIELD_ALIASES: Record<string, string[]> = {
   ],
   "internship.responsibilities": [
     "工作职责", "岗位职责", "职责描述", "主要职责", "职责", "岗位职责描述", "负责工作", "负责内容",
+    // 字节跳动官网真机文案：不补这条，「职位描述」会被裸别名「职位」抢去当岗位名
+    "职位描述", "职务描述",
     "responsibilities", "job responsibilities", "key responsibilities", "main responsibilities",
     "job duties", "duties",
   ],
@@ -232,6 +265,11 @@ export const FIELD_ALIASES: Record<string, string[]> = {
     "campus summary",
   ],
 
+  /** 「是否有项目经验」是非题（同上：只写完整问句，英文问句会和 `project` 这个宽别名打架，故不写） */
+  "project.hasExperience": [
+    "是否有项目经验", "是否有过项目经验", "是否有项目经历", "有无项目经验",
+    "是否参与过项目", "是否有过参与项目", "是否有项目管理经验",
+  ],
   "project.name": [
     "项目名称", "项目", "项目名", "项目/课题名称", "课题名称", "项目题目",
     "project name", "project", "project title",
@@ -328,6 +366,33 @@ export const FIELD_ALIASES: Record<string, string[]> = {
   "job.expectedIndustry": [
     "期望行业", "意向行业", "目标行业", "期望行业领域", "行业意向",
     "expected industry", "preferred industry", "desired industry", "target industry",
+  ],
+  /**
+   * 「是否…」偏好单选题。别名一律写成**问句形态**（含「是否/能否/可否/接受」），
+   * 不写「加班」「异地」这种单词——否则「对加班的看法」这类文本框会被误判成单选题。
+   */
+  "job.acceptOfflineInterview": [
+    "是否接受线下面试", "是否接受线下", "是否能接受线下面试", "可否接受线下面试", "是否同意线下面试",
+    "接受线下面试", "可以接受线下面试", "线下面试", "线下到面", "是否可到线下", "是否参加线下面试",
+    "on-site interview", "in person interview", "offline interview", "onsite interview",
+  ],
+  "job.acceptOnlineInterview": [
+    "是否接受线上面试", "是否能接受线上面试", "可否接受线上面试", "是否同意线上面试",
+    "接受线上面试", "可以接受线上面试", "线上面试", "视频面试", "是否接受视频面试", "远程面试",
+    "online interview", "remote interview", "video interview",
+  ],
+  "job.acceptBusinessTrip": [
+    "是否接受出差", "能否接受出差", "可否接受出差", "是否同意出差", "接受出差", "可以出差", "出差接受度",
+    "willing to travel", "travel required", "business trip",
+  ],
+  "job.acceptRelocation": [
+    "是否接受异地", "是否接受异地工作", "能否接受异地", "是否接受外派", "能否接受外派", "接受异地工作",
+    "可接受异地", "是否愿意改变工作地点", "异地工作",
+    "willing to relocate", "relocation preference", "willingness to relocate",
+  ],
+  "job.acceptOvertime": [
+    "是否接受加班", "能否接受加班", "可否接受加班", "是否同意加班", "可以接受加班", "接受加班吗", "加班接受度",
+    "willing to work overtime", "overtime preference",
   ],
 
   "content.selfIntroduction": [

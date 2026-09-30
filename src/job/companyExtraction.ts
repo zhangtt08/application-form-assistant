@@ -55,6 +55,8 @@ const NOISE_SUFFIXES = [
   "招聘官网", "人才招聘", "校园招聘", "社会招聘", "官方招聘", "职位招聘",
   "招聘", "校招", "社招", "人才网", "招聘网", "网申",
   "careers", "career", "jobs", "job", "hiring",
+  // logo 的 alt 文案惯例是「<公司> logo」（真机 Lever：alt="Spotify logo"）
+  "logo", "标志", "图标",
 ];
 
 /** 纯导航/栏目词：绝不能当公司名 */
@@ -67,6 +69,27 @@ const NAV_ONLY_WORDS = new Set([
 /** 通用页面词/问候语：绝不能当公司名（回归：title=「欢迎」的站点不得输出 company=欢迎） */
 const GENERIC_PAGE_WORDS =
   /^(欢迎|欢迎光临|欢迎加入|welcome|hello|hi|你好|公告|通知|新闻|资讯|动态|关于我们|联系我们|加入我们|友情链接|版权所有)$/i;
+
+/**
+ * 筛选条 / 职位类别 / 城市词：国内招聘官网把筛选面板挂在 class 含 company 的节点上
+ * （小红书校招 [class*="company"] 抓到「全部 / 算法 / 研发 / 北京市」），
+ * 这类值即使来自高置信来源也绝不是公司名 → 精确匹配即拒绝。
+ */
+const FILTER_CITY_WORDS = new Set(
+  [
+    "全部", "更多", "筛选", "清除", "不限", "其他",
+    "算法", "研发", "技术", "非技术", "产品", "设计", "运营", "市场", "销售", "职能", "支持",
+    "数据", "前端", "后端", "客户端", "测试", "运维", "游戏策划", "项目管理", "硬件",
+    "实习", "正式", "校招", "社招", "全职", "兼职", "日常实习",
+    "职位方向", "工作地点", "招聘项目", "子方向", "职位类别",
+    "北京", "上海", "深圳", "广州", "杭州", "成都", "重庆", "南京", "武汉", "西安",
+    "苏州", "长沙", "天津", "郑州", "合肥", "厦门", "青岛", "东莞", "佛山", "宁波",
+    "新加坡", "香港", "台北",
+  ].map((w) => w.toLowerCase()),
+);
+
+/** 行政区划词（「北京市」「广东省」）：工作地点筛选条的典型形态 */
+const ADMIN_DIVISION_PATTERN = /^[\u4e00-\u9fa5]{1,6}(市|省|自治区)$/;
 
 /** 职位词：candidate 含这些词降权（很可能是岗位名不是公司名） */
 const JOB_LIKE_PATTERN = /工程师|经理|专员|助理|实习|主管|总监|运营|设计|开发|产品|算法|测试|策划|岗$|岗位|职位|hiring|intern|engineer|manager/i;
@@ -123,6 +146,9 @@ function makeCandidate(value: string, source: CompanySource, confidence: number)
   if (NAV_ONLY_WORDS.has(normalized.toLowerCase()) || NAV_ONLY_WORDS.has(normalized)) return null;
   // 通用页面词/问候语拒绝
   if (GENERIC_PAGE_WORDS.test(normalized)) return null;
+  // 筛选条 / 职位类别 / 城市词拒绝（不论来源置信度）
+  if (FILTER_CITY_WORDS.has(normalized.toLowerCase())) return null;
+  if (ADMIN_DIVISION_PATTERN.test(normalized)) return null;
   // 纯「招聘」类词拒绝
   if (/^(招聘|校招|社招|人才|官网|网申)+$/.test(normalized)) return null;
   return { value: normalized, source, confidence, rawValue: value.trim() };
@@ -220,7 +246,16 @@ export function extractCompanyWithMetadata(raw: RawJobPage): CompanyExtractionRe
   candidates.push(...candidatesFromStructuredData(raw.structuredData ?? []));
 
   // Issue #001 Case E/F：第三方 ATS 宿主页的 title/header/meta 都是 ATS 模板噪音
-  // （boards.greenhouse.io 的 title=职位名、mokahr 的 title=栏目名）→ 只信 structured data
+  // （boards.greenhouse.io 的 title=职位名、mokahr 的 title=栏目名）→ 只信招聘方自己写的内容。
+  // Logo alt 属于这一类：真机 Greenhouse 的 `<img alt="General Matter Logo">` 是租户自己填的，
+  // 而厂商名（Lever/Greenhouse/Moka）在 scoreCandidate 里已被 ATS_BRAND_PATTERN 一律拒绝。
+  if (hostAts) {
+    for (const alt of raw.logoAlts ?? []) {
+      const c = makeCandidate(alt, "logo_alt", 0.9);
+      if (c) candidates.push(c);
+    }
+  }
+
   if (!hostAts) {
     // 2. 明确公司节点（capture 端从 class/id/data-testid/aria-label 收集）
     for (const text of raw.brandTexts ?? []) {
@@ -251,13 +286,16 @@ export function extractCompanyWithMetadata(raw: RawJobPage): CompanyExtractionRe
     }
 
     // 6. Title fallback（旧逻辑候选化：title 通常 =「职位 - 公司招聘」或「公司招聘官网」）
+    //    倒序采集：国内官网通行格式是「职位 - 团队 - 公司」，末段才是公司
+    //    （真机回归：jobs.bytedance.com「Android开发工程师 - 移动OS - 字节跳动」曾取到「移动OS」）。
+    //    同分候选按插入顺序胜出，岗位词候选已被降权过滤，所以两种「公司-职位」顺序都不会取错。
     const meta = raw.metaTitle || raw.pageTitle;
     if (meta) {
       const segments = meta
         .split(/[-_｜|【】\[\]()（）]/)
         .map((s) => normalizeCompanyName(s.trim()))
         .filter(Boolean);
-      for (const seg of segments) {
+      for (const seg of [...segments].reverse()) {
         const c = makeCandidate(seg, "title", 0.65);
         if (c) candidates.push(c);
       }

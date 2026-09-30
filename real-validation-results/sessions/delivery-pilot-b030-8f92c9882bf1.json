@@ -1,0 +1,416 @@
+{
+  "url": "https://jobs.lever.co/spotify/2193db3f-77c5-43b8-b030-8f92c9882bf1",
+  "at": "2026-09-30T04:44:34.335Z",
+  "syntheticOnly": true,
+  "submittedClicked": false,
+  "steps": [
+    "sidepanel_ready",
+    "job_page_loaded",
+    "recognized_jd_page",
+    "clicked_apply(\"Apply for this job\")",
+    "fill_done",
+    "undo_done"
+  ],
+  "extensionId": "lemicjglmigehcmghknmkceplmfpjeaf",
+  "pageTitle": "Spotify - Android Engineer - Experience",
+  "jobBarAfterJdRecognize": "Spotify · Android Engineer - Experience",
+  "jobBar": "Spotify · Android Engineer - Experience",
+  "summaryCells": [
+    "8",
+    "0",
+    "7",
+    "3"
+  ],
+  "errorBanner": "",
+  "fieldCards": 19,
+  "cardStatuses": [
+    {
+      "status": "filled",
+      "fieldId": "basic.name",
+      "label": "Full name✱",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.email",
+      "label": "Email✱",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.phone",
+      "label": "Phone ✱",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "internship.company",
+      "label": "Current company ✱",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.linkedin",
+      "label": "LinkedIn URL",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.github",
+      "label": "GitHub URL",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.portfolio",
+      "label": "Portfolio URL",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.portfolio",
+      "label": "Other website",
+      "reason": ""
+    },
+    {
+      "status": "manual",
+      "fieldId": "basic.phone",
+      "label": "Spotify has my consent to cont",
+      "reason": ""
+    },
+    {
+      "status": "failed",
+      "fieldId": "basic.city",
+      "label": "Select...LondonStockholm",
+      "reason": "没填进去：select 中没有匹配选项: 上海"
+    },
+    {
+      "status": "failed",
+      "fieldId": "basic.city",
+      "label": "Current location ✱No location ",
+      "reason": "没填进去：写入被页面回滚（受控组件），请人工填写"
+    },
+    {
+      "status": "failed",
+      "fieldId": "basic.city",
+      "label": "What is your location?Select..",
+      "reason": "没填进去：select 中没有匹配选项: 上海"
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "He/him",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "No",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "Yes",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "0-4",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "Please try again. ⚠️Verify",
+      "reason": "该字段在页面内嵌框架里，已按框架单独写入"
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "Please try again. ⚠️Verify",
+      "reason": "该字段在页面内嵌框架里，已按框架单独写入"
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "Please try again. ⚠️Verify",
+      "reason": "该字段在页面内嵌框架里，已按框架单独写入"
+    }
+  ],
+  "formUrl": "https://jobs.lever.co/spotify/2193db3f-77c5-43b8-b030-8f92c9882bf1/apply",
+  "controls": {
+    "total": 33,
+    "filled": 8,
+    "unexplained": 2,
+    "empty": 23
+  },
+  "filledSample": [
+    {
+      "label": "Full name✱",
+      "len": 8,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "Email✱",
+      "len": 24,
+      "frame": "main",
+      "type": "email"
+    },
+    {
+      "label": "Phone ✱",
+      "len": 11,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "Current company ✱",
+      "len": 8,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "LinkedIn URL",
+      "len": 36,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "GitHub URL",
+      "len": 27,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "Portfolio URL",
+      "len": 27,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "Other website",
+      "len": 27,
+      "frame": "main",
+      "type": "text"
+    }
+  ],
+  "unexplainedSample": [
+    {
+      "label": "opportunityLocationId",
+      "len": 9,
+      "frame": "main",
+      "type": "select-one"
+    },
+    {
+      "label": "What is your location?Select...Afghanist",
+      "len": 9,
+      "frame": "main",
+      "type": "select-one"
+    }
+  ],
+  "emptySample": [
+    {
+      "label": "He/him",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "She/her",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "They/them",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Xe/xem",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Ze/hir",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Ey/em",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Hir/hir",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Fae/faer",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Hu/hu",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Use name only",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Custom",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Current location ✱No location found. Try",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "No",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Yes - Intern",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Yes - Full Time Employment",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    },
+    {
+      "label": "Yes",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "No",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "N/A (I’m currently based in Stockholm or",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "0-4",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "4-6",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "6-9",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "9+",
+      "frame": "main",
+      "type": "radio",
+      "readonly": false
+    },
+    {
+      "label": "Spotify has my consent to contact me abo",
+      "frame": "main",
+      "type": "checkbox",
+      "readonly": false
+    }
+  ],
+  "frameKinds": {
+    "main": 33,
+    "sub": 0
+  },
+  "pageFrames": [
+    "https://jobs.lever.co/spotify/2193db3f-77c5-43b8-b030-8f92c9882bf1/apply",
+    "https://newassets.hcaptcha.com/captcha/v1/b9ca2a6602c2bf69741b771db488f3001ea35b08/static/",
+    "https://newassets.hcaptcha.com/captcha/v1/b9ca2a6602c2bf69741b771db488f3001ea35b08/static/",
+    "https://newassets.hcaptcha.com/captcha/v1/b9ca2a6602c2bf69741b771db488f3001ea35b08/static/",
+    "https://newassets.hcaptcha.com/captcha/v1/b9ca2a6602c2bf69741b771db488f3001ea35b08/static/",
+    "https://newassets.hcaptcha.com/captcha/v1/b9ca2a6602c2bf69741b771db488f3001ea35b08/static/",
+    "https://newassets.hcaptcha.com/captcha/v1/b9ca2a6602c2bf69741b771db488f3001ea35b08/static/"
+  ],
+  "undoMarkers": 8,
+  "undoNotice": "已撤销本次填写，恢复 0 个字段；8 个字段页面没有交还控制权，请在网页上手动清空。",
+  "afterUndo": {
+    "filled": 8,
+    "unexplained": 2,
+    "empty": 23
+  },
+  "afterUndoSample": [
+    {
+      "label": "Full name✱",
+      "len": 8,
+      "frame": "main"
+    },
+    {
+      "label": "Email✱",
+      "len": 24,
+      "frame": "main"
+    },
+    {
+      "label": "Phone ✱",
+      "len": 11,
+      "frame": "main"
+    },
+    {
+      "label": "Current company ✱",
+      "len": 8,
+      "frame": "main"
+    },
+    {
+      "label": "LinkedIn URL",
+      "len": 36,
+      "frame": "main"
+    },
+    {
+      "label": "GitHub URL",
+      "len": 27,
+      "frame": "main"
+    },
+    {
+      "label": "Portfolio URL",
+      "len": 27,
+      "frame": "main"
+    },
+    {
+      "label": "Other website",
+      "len": 27,
+      "frame": "main"
+    }
+  ],
+  "submitStillThere": 6
+}

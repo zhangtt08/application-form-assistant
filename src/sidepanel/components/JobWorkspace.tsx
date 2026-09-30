@@ -11,6 +11,22 @@ const ALL_STATUSES: JobStatus[] = [
   "saved", "preparing", "applying", "submitted", "assessment", "interview", "offer", "rejected", "withdrawn",
 ];
 
+/**
+ * 「开始 / 继续申请」必须把人带到这个岗位的原页：以前只是切到「投递」标签，
+ * 如果用户此时看的是别的网页，切过去填的就是另一张表。
+ * 已经开着这个页面 → 激活它，不再开一个重复标签。
+ */
+async function focusOrOpenJobSource(url: string): Promise<void> {
+  if (!/^https?:\/\//i.test(url)) return;
+  const existing = await chrome.tabs.query({ url });
+  const tabId = existing[0]?.id;
+  if (tabId != null) {
+    await chrome.tabs.update(tabId, { active: true });
+    return;
+  }
+  await chrome.tabs.create({ url });
+}
+
 const EVENT_LABELS: Record<string, string> = {
   JOB_CAPTURED: "捕获岗位",
   JOB_UPDATED: "更新岗位",
@@ -124,7 +140,14 @@ export function JobWorkspace(p: {
           <span className="muted small">公司</span><span>{job.company || "—"}</span>
           <span className="muted small">岗位</span><span>{job.position || "—"}</span>
           <span className="muted small">地点</span><span>{job.location || "—"}</span>
-          <span className="muted small">来源</span><span className="muted small">{job.sourceUrl}</span>
+          <span className="muted small">来源</span>
+          <span className="muted small">
+            {/^https?:\/\//i.test(job.sourceUrl) ? (
+              <a href={job.sourceUrl} target="_blank" rel="noreferrer">{job.sourceUrl}</a>
+            ) : (
+              job.sourceUrl || "—"
+            )}
+          </span>
           <span className="muted small">状态</span>
           <span>
             <select value={job.status} onChange={(e) => void changeStatus(e.target.value as JobStatus)}>
@@ -159,7 +182,13 @@ export function JobWorkspace(p: {
             </li>
           ))}
         </ul>
-        <button className="primary" onClick={() => p.onStartApplication(job.id)}>
+        <button
+          className="primary"
+          onClick={() => {
+            void focusOrOpenJobSource(job.sourceUrl);
+            void p.onStartApplication(job.id);
+          }}
+        >
           {sessions.length > 0 ? "开始 / 继续申请" : "开始申请"}
         </button>
       </section>

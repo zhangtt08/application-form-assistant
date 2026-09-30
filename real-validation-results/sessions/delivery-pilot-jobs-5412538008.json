@@ -1,0 +1,339 @@
+{
+  "url": "https://job-boards.greenhouse.io/generalmatter/jobs/5412538008",
+  "at": "2026-09-30T04:45:30.625Z",
+  "syntheticOnly": true,
+  "submittedClicked": false,
+  "steps": [
+    "sidepanel_ready",
+    "job_page_loaded",
+    "recognized_jd_page",
+    "clicked_apply(\"apply for this job\")",
+    "fill_done",
+    "undo_done"
+  ],
+  "extensionId": "lemicjglmigehcmghknmkceplmfpjeaf",
+  "pageTitle": "Job Application for Software Engineer, Data Platform at General Matter",
+  "jobBarAfterJdRecognize": "General Matter · Software Engineer, Data Platform",
+  "jobBar": "General Matter · Software Engineer, Data Platform",
+  "summaryCells": [
+    "9",
+    "0",
+    "11"
+  ],
+  "errorBanner": "",
+  "fieldCards": 20,
+  "cardStatuses": [
+    {
+      "status": "filled",
+      "fieldId": "basic.givenName",
+      "label": "First Name*",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.surname",
+      "label": "Last Name*",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.email",
+      "label": "Email*",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.phone",
+      "label": "Phone*",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.city",
+      "label": "Location (City)*",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "education.school",
+      "label": "School*",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "education.degreeType",
+      "label": "Degree*",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.linkedin",
+      "label": "LinkedIn Profile",
+      "reason": ""
+    },
+    {
+      "status": "filled",
+      "fieldId": "basic.gender",
+      "label": "Gender",
+      "reason": ""
+    },
+    {
+      "status": "manual",
+      "fieldId": "unknown",
+      "label": "Are you legally authorized to ",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "Country*",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "Discipline*",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "How did you hear about this jo",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "This job requires access to ex",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "Clearance Eligibility*",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "Active Security Clearance(s)*",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "This role is an in-person role",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "Tell us about your proudest ac",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "Are you Hispanic/Latino?",
+      "reason": ""
+    },
+    {
+      "status": "unknown",
+      "fieldId": "unknown",
+      "label": "Veteran Status",
+      "reason": ""
+    }
+  ],
+  "formUrl": "https://job-boards.greenhouse.io/generalmatter/jobs/5412538008",
+  "controls": {
+    "total": 22,
+    "filled": 6,
+    "unexplained": 0,
+    "empty": 16
+  },
+  "filledSample": [
+    {
+      "label": "First Name*",
+      "len": 2,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "Last Name*",
+      "len": 1,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "Email*",
+      "len": 24,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "Phone*",
+      "len": 11,
+      "frame": "main",
+      "type": "tel"
+    },
+    {
+      "label": "LinkedIn Profile",
+      "len": 36,
+      "frame": "main",
+      "type": "text"
+    },
+    {
+      "label": "Gender",
+      "len": 1,
+      "frame": "main",
+      "type": "text"
+    }
+  ],
+  "unexplainedSample": [],
+  "emptySample": [
+    {
+      "label": "Country*",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "Location (City)*",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "Attach",
+      "frame": "main",
+      "type": "file",
+      "readonly": false
+    },
+    {
+      "label": "School*",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "Degree*",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "Discipline*",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "Attach",
+      "frame": "main",
+      "type": "file",
+      "readonly": false
+    },
+    {
+      "label": "How did you hear about this job?*",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "Are you legally authorized to work in th",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "This job requires access to export-contr",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "Clearance Eligibility*",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "Active Security Clearance(s)*",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "This role is an in-person role at the st",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "Tell us about your proudest accomplishme",
+      "frame": "main",
+      "type": "textarea",
+      "readonly": false
+    },
+    {
+      "label": "Are you Hispanic/Latino?",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    },
+    {
+      "label": "Veteran Status",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    }
+  ],
+  "frameKinds": {
+    "main": 22,
+    "sub": 0
+  },
+  "pageFrames": [
+    "https://job-boards.greenhouse.io/generalmatter/jobs/5412538008",
+    "https://content.googleapis.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static"
+  ],
+  "undoMarkers": 9,
+  "undoNotice": "已撤销本次填写，恢复 0 个字段；17 个字段页面没有交还控制权，请在网页上手动清空。",
+  "afterUndo": {
+    "filled": 6,
+    "unexplained": 0,
+    "empty": 16
+  },
+  "afterUndoSample": [
+    {
+      "label": "First Name*",
+      "len": 2,
+      "frame": "main"
+    },
+    {
+      "label": "Last Name*",
+      "len": 1,
+      "frame": "main"
+    },
+    {
+      "label": "Email*",
+      "len": 24,
+      "frame": "main"
+    },
+    {
+      "label": "Phone*",
+      "len": 11,
+      "frame": "main"
+    },
+    {
+      "label": "LinkedIn Profile",
+      "len": 36,
+      "frame": "main"
+    },
+    {
+      "label": "Gender",
+      "len": 1,
+      "frame": "main"
+    }
+  ],
+  "submitStillThere": 24
+}

@@ -1112,6 +1112,7 @@ input.field-value:focus { border-color: var(--accent); background: var(--panel);
 }
 
 .pe-row input,
+.pe-row select,
 .pe-row textarea {
   flex: 1;
   min-width: 0;
@@ -1323,3 +1324,76 @@ input.field-value:focus { border-color: var(--accent); background: var(--panel);
 .trace-failed .trace-stage { color: var(--manual); }
 .trace-success .trace-stage { color: var(--safe); }
 .trace-msg { color: var(--text-2); word-break: break-all; }
+
+/* ===== 紧凑字段行（已按资料库填好的客观信息）=====
+   420px 宽的侧边栏里，14 张完整卡片就是约 2000px 滚动；一行一条才看得完。 */
+.field-card.field-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 10px;
+  margin: 0 0 4px;
+  font-family: var(--font);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--ok, #2e9e5b);
+  border-radius: 6px;
+}
+
+.field-card.field-line:hover { border-color: var(--accent); }
+
+.line-dot {
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok, #2e9e5b);
+}
+.line-dot.dot-ready { background: var(--accent); }
+
+.line-label {
+  flex: 0 1 auto;
+  max-width: 40%;
+  overflow: hidden;
+  font-weight: 600;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-id { flex: 0 0 auto; color: var(--text-muted); font-family: ui-monospace, monospace; font-size: 11px; }
+
+.line-open {
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-size: 11px;
+}
+
+.line-collapse {
+  align-self: flex-start;
+  padding: 2px 8px;
+  margin: -4px 0 6px;
+  font-size: 11px;
+  color: var(--accent);
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+/* 岗位卡片行尾的下一步动作（整卡可点，但要让人看出来） */
+.job-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.job-card-go { flex: 0 0 auto; color: var(--accent); font-weight: 600; }

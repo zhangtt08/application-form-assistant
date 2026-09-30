@@ -1,0 +1,50 @@
+{
+  "url": "https://hkex.wd3.myworkdayjobs.com/zh-CN/HKEXCareerPage/details/XMLNAME-2026-HKEX-Summer-Internship-Programme---Global-Client-Development--Singapore-Office-_R003679",
+  "at": "2026-09-30T04:25:45.564Z",
+  "syntheticOnly": true,
+  "submittedClicked": false,
+  "steps": [
+    "sidepanel_ready",
+    "job_page_loaded",
+    "recognized_jd_page",
+    "fill_timeout"
+  ],
+  "extensionId": "lemicjglmigehcmghknmkceplmfpjeaf",
+  "pageTitle": "搜索职务",
+  "jobBarAfterJdRecognize": "未识别到岗位",
+  "jobBar": "未识别到岗位",
+  "summaryCells": [
+    "0",
+    "0",
+    "0"
+  ],
+  "errorBanner": "",
+  "fieldCards": 0,
+  "cardStatuses": [],
+  "formUrl": "https://hkex.wd3.myworkdayjobs.com/zh-CN/HKEXCareerPage/details/XMLNAME-2026-HKEX-Summer-Internship-Programme---Global-Client-Development--Singapore-Office-_R003679",
+  "controls": {
+    "total": 1,
+    "filled": 0,
+    "unexplained": 0,
+    "empty": 1
+  },
+  "filledSample": [],
+  "unexplainedSample": [],
+  "emptySample": [
+    {
+      "label": "搜索职务或关键字",
+      "frame": "main",
+      "type": "text",
+      "readonly": false
+    }
+  ],
+  "frameKinds": {
+    "main": 1,
+    "sub": 0
+  },
+  "pageFrames": [
+    "https://hkex.wd3.myworkdayjobs.com/zh-CN/HKEXCareerPage/details/XMLNAME-2026-HKEX-Summer-I"
+  ],
+  "undoMarkers": 0,
+  "submitStillThere": 20
+}

@@ -247,6 +247,9 @@ describe("风险分级（验收 5 · 一键填写策略）", () => {
       options: ["是", "否"],
     });
     expect(m.fieldId).not.toBe("basic.politicalStatus");
+    // 真实岗位偏好题：识别成 job.acceptOfflineInterview，资料库里答过一次即可自动勾选
+    expect(m.fieldId).toBe("job.acceptOfflineInterview");
+    expect(riskOfFieldId("job.acceptOfflineInterview").risk).toBe("SAFE");
   });
 
   it("basic.name → SAFE；content.selfEvaluation → REVIEW", () => {
@@ -294,6 +297,18 @@ describe("词表泛化回归（常见 ATS 标签）", () => {
   it("校园经历语义槽位 → campus.*", () => {
     expect(matchField(field({ context: { labelText: "学生工作职责" } })).fieldId).toBe("campus.responsibilities");
     expect(matchField(field({ context: { labelText: "学生工作内容" } })).fieldId).toBe("campus.workContent");
+  });
+
+  it("纯教育板块的时间栏归教育线；混合标题不替用户猜是哪一段经历", () => {
+    // 真机字节跳动：教育经历下的「开始时间」原来被实习线词表抢走
+    expect(matchField(field({ context: { labelText: "开始时间", sectionTitle: "教育经历" } })).fieldId).toBe("education.startDate");
+    expect(matchField(field({ context: { labelText: "结束时间", sectionTitle: "教育经历" } })).fieldId).toBe("education.endDate");
+    // 「教育及实习经历」两段共用一个板块，转移会把时间判给教育线 → 保持既有行为，不启用
+    expect(matchField(field({ context: { labelText: "开始时间", sectionTitle: "教育及实习经历" } })).fieldId).not.toBe("education.startDate");
+  });
+
+  it("板块写着实习经历时，时间栏仍归实习线", () => {
+    expect(matchField(field({ context: { labelText: "开始时间", sectionTitle: "实习经历" } })).fieldId).toBe("internship.startDate");
   });
 
   it("placeholder『请输入工作内容』→ internship.workContent", () => {

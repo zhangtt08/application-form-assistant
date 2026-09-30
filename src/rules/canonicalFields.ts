@@ -7,6 +7,10 @@ import type { CanonicalFieldDef } from "../types/profile";
 export const CANONICAL_FIELDS: CanonicalFieldDef[] = [
   { id: "basic.name", group: "basic", multiEntry: false },
   { id: "basic.englishName", group: "basic", multiEntry: false },
+  { id: "basic.surname", group: "basic", multiEntry: false },
+  { id: "basic.givenName", group: "basic", multiEntry: false },
+  { id: "basic.linkedin", group: "basic", multiEntry: false },
+  { id: "basic.github", group: "basic", multiEntry: false },
   { id: "basic.gender", group: "basic", multiEntry: false },
   { id: "basic.birthDate", group: "basic", multiEntry: false },
   { id: "basic.age", group: "basic", multiEntry: false },
@@ -42,6 +46,11 @@ export const CANONICAL_FIELDS: CanonicalFieldDef[] = [
   { id: "education.rank", group: "education", multiEntry: true },
 
   { id: "internship.company", group: "internship", multiEntry: true },
+  /**
+   * 「是否有实习经历」是非题（无条目 = 不回答，绝不因为没录就答「否」）。
+   * multiEntry=false：它不是某一条经历的属性，而是整段经历的存在性。
+   */
+  { id: "internship.hasExperience", group: "internship", multiEntry: false },
   { id: "internship.department", group: "internship", multiEntry: true },
   { id: "internship.position", group: "internship", multiEntry: true },
   { id: "internship.startDate", group: "internship", multiEntry: true },
@@ -74,6 +83,8 @@ export const CANONICAL_FIELDS: CanonicalFieldDef[] = [
   { id: "campus.summary", group: "campus", multiEntry: true },
 
   { id: "project.name", group: "project", multiEntry: true },
+  /** 「是否有项目经验」是非题（同 internship.hasExperience：只在有条目时答「是」） */
+  { id: "project.hasExperience", group: "project", multiEntry: false },
   { id: "project.role", group: "project", multiEntry: true },
   { id: "project.startDate", group: "project", multiEntry: true },
   { id: "project.endDate", group: "project", multiEntry: true },
@@ -101,6 +112,12 @@ export const CANONICAL_FIELDS: CanonicalFieldDef[] = [
   { id: "job.availableDate", group: "job", multiEntry: false },
   { id: "job.employmentType", group: "job", multiEntry: false },
   { id: "job.expectedIndustry", group: "job", multiEntry: false },
+  /** 「是否…」偏好单选题：用户在资料库里答过一次，之后全网申自动选同一答案 */
+  { id: "job.acceptOfflineInterview", group: "job", multiEntry: false },
+  { id: "job.acceptOnlineInterview", group: "job", multiEntry: false },
+  { id: "job.acceptBusinessTrip", group: "job", multiEntry: false },
+  { id: "job.acceptRelocation", group: "job", multiEntry: false },
+  { id: "job.acceptOvertime", group: "job", multiEntry: false },
 
   {
     id: "content.selfIntroduction",

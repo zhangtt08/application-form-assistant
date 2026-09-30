@@ -1,0 +1,45 @@
+{
+  "url": "https://sou.zhaopin.com/?kw=Java%20%E5%B7%A5%E7%A8%8B%E5%B8%88&sl=8",
+  "at": "2026-09-30T06:15:13.247Z",
+  "syntheticOnly": true,
+  "submittedClicked": false,
+  "steps": [
+    "sidepanel_ready",
+    "job_page_loaded",
+    "click_not_found(\"工程师\")",
+    "recognized_jd_page",
+    "fill_timeout"
+  ],
+  "extensionId": "lemicjglmigehcmghknmkceplmfpjeaf",
+  "pageTitle": "Security Verification",
+  "jobBarAfterJdRecognize": "未识别到岗位",
+  "jobBar": "未识别到岗位",
+  "summaryCells": [
+    "0",
+    "0",
+    "0"
+  ],
+  "errorBanner": "",
+  "fieldCards": 0,
+  "cardStatuses": [],
+  "formUrl": "https://sou.zhaopin.com/?kw=Java%20%E5%B7%A5%E7%A8%8B%E5%B8%88&sl=8",
+  "controls": {
+    "total": 0,
+    "filled": 0,
+    "unexplained": 0,
+    "empty": 0
+  },
+  "filledSample": [],
+  "unexplainedSample": [],
+  "emptySample": [],
+  "frameKinds": {
+    "main": 0,
+    "sub": 0
+  },
+  "pageFrames": [
+    "https://sou.zhaopin.com/?kw=Java%20%E5%B7%A5%E7%A8%8B%E5%B8%88&sl=8",
+    "https://captcha.eo.gtimg.com/static/template/widget_ele_eo.492df198.html"
+  ],
+  "undoMarkers": 0,
+  "submitStillThere": 0
+}

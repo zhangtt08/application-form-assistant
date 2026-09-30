@@ -44,6 +44,9 @@ describe("isReasonablePositionTitle — 接受清单（不得误杀）", () => {
     "实施工程师",
     "战略分析",
     "业务拓展",
+    // 真机 Greenhouse 的 <h1>：英文 ATS 用「职位, 团队/方向」写法，半角逗号不是句子标点
+    "Software Engineer, Data Platform",
+    "Senior Product Manager, Growth",
   ];
   for (const t of accept) {
     it(`接受：${t}`, () => {

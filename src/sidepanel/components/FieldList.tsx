@@ -81,12 +81,21 @@ export function FieldList(props: FieldListProps) {
 
   const toggle = (key: string) => setOpen((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  /**
+   * 哪些卡片压成一行：状态是可填写/已填写、且不是开放题、也不是「用户可改内容的长文本」。
+   * 客观信息（姓名、手机号、学校）没什么可看的，一行足够；
+   * 长文本与开放题是「值得核对」的内容，保持完整卡片。
+   */
+  const isCompact = (c: CandidateField): boolean =>
+    (c.status === "ready" || c.status === "filled") && !c.openAnswer && c.value?.editable !== true;
+
   const renderCards = (list: CandidateField[]) =>
     sortByStatus(list).map((c) => (
       <FieldCard
         key={c.raw.reference}
         candidate={c}
         devMode={props.devMode}
+        compact={isCompact(c)}
         onToggleConfirm={props.onToggleConfirm}
         onEditValue={props.onEditValue}
         onVariantChange={props.onVariantChange}

@@ -5,6 +5,10 @@ export const defaultProfile: Profile = {
   basic: {
     name: "",
     englishName: "",
+    surname: "",
+    givenName: "",
+    linkedin: "",
+    github: "",
     gender: "",
     birthDate: "",
     age: "",
@@ -86,6 +90,11 @@ export const defaultProfile: Profile = {
     availableDate: "",
     employmentType: "",
     expectedIndustry: "",
+    acceptOfflineInterview: "",
+    acceptOnlineInterview: "",
+    acceptBusinessTrip: "",
+    acceptRelocation: "",
+    acceptOvertime: "",
   },
   content: {
     selfIntroduction: { short: "", medium: "", long: "" },
