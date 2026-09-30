@@ -130,7 +130,9 @@ export function LibraryPicker(props: LibraryPickerProps) {
       )}
 
       {!compact && active && (
-        <div className="libbar-actions">
+        <details className="soft-fold libbar-fold">
+          <summary>管理资料库（改名 / 复制 / 删除）</summary>
+          <div className="libbar-actions">
           <button
             type="button"
             className="btn-sm"
@@ -172,7 +174,8 @@ export function LibraryPicker(props: LibraryPickerProps) {
               只剩这一个资料库，不能删除；要清理内容请用「重置为空」，或先「新建」一个库。
             </p>
           )}
-        </div>
+          </div>
+        </details>
       )}
 
       {form && (

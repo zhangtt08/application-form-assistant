@@ -290,17 +290,21 @@ export function ProfileEditor({
           ← 返回投递
         </button>
         <div className="spacer" />
-        <button type="button" onClick={handleExport}>
-          导出 JSON
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            if (window.confirm("重置会清空当前编辑中的所有资料，确定？")) setDraft(structuredClone(defaultProfile));
-          }}
-        >
-          重置为空
-        </button>
+        {/* 导出 / 重置是低频动作：折进「更多」，顶栏只剩「返回」和「保存」两个决定 */}
+        <details className="soft-fold pe-more">
+          <summary>更多</summary>
+          <button type="button" onClick={handleExport}>
+            导出 JSON
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm("重置会清空当前编辑中的所有资料，确定？")) setDraft(structuredClone(defaultProfile));
+            }}
+          >
+            重置为空
+          </button>
+        </details>
         <button type="button" className="primary" onClick={handleSave} disabled={!dirty} title={dirty ? "" : "没有需要保存的改动"}>
           保存
         </button>

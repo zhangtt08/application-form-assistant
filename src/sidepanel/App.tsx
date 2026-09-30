@@ -1087,7 +1087,7 @@ export default function App() {
            否则页面上会同时出现「已撤销本次填写」和「表单已填写」两句互相矛盾的话。 */
         <div className="banner banner-ok">
           表单已填写。请核对后在网站上<strong>自己点击提交</strong>。
-          <button type="button" className="btn-sm primary" onClick={() => void handleMarkSubmitted()}>
+          <button type="button" className="btn-sm" onClick={() => void handleMarkSubmitted()}>
             我已完成投递
           </button>
         </div>
@@ -1155,7 +1155,7 @@ export default function App() {
             </p>
           )}
 
-          <Stepper steps={steps} />
+          <Stepper steps={steps} collapsed={phase === "done" || phase === "ready"} />
 
           {(phase === "ready" || phase === "filling" || phase === "done") && (
             <>
@@ -1184,11 +1184,12 @@ export default function App() {
                 </div>
 
                 <div className="summary-actions">
-                  <button type="button" className="btn-sm" onClick={() => void handleRecognize()} disabled={phase === "filling"}>
+                  {/* 重识别 / 撤销是「出问题时才用」的次要动作：降成文字链，让主操作只有一个 */}
+                  <button type="button" className="link-btn" onClick={() => void handleRecognize()} disabled={phase === "filling"}>
                     重新识别
                   </button>
                   {originals.length > 0 && (
-                    <button type="button" className="btn-sm" onClick={() => void handleUndo()}>
+                    <button type="button" className="link-btn" onClick={() => void handleUndo()}>
                       撤销本次填写
                     </button>
                   )}
@@ -1232,7 +1233,7 @@ export default function App() {
                 </div>
               </section>
 
-              {url && (
+              {prefs.showDev && url && (
                 <div className="url-line">
                   当前页面：<a href={url} target="_blank" rel="noreferrer">{url}</a>
                 </div>

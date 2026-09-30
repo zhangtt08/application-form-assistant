@@ -350,7 +350,20 @@ def main() -> int:
         shot("02-apply")
         print("SUMMARY >>>", " | ".join(x.strip() for x in page.inner_text(".summary").split("\n") if x.strip()))
         print("BANNER >>>", page.locator(".banner").all_inner_texts())
+        # 识别完成后步骤卡默认收成一行（只有失败时才自动展开）：先记录用户看到的那一行，再展开看细节
+        if page.locator(".stepper-fold").count() > 0:
+            print("STEPPER LINE >>>", page.inner_text(".stepper-fold > summary").replace("\n", " "))
+            try:
+                page.locator(".stepper-fold").first.evaluate("el => { el.open = true }")
+            except Exception:
+                pass
         print("STEPPER >>>", " / ".join(x.strip() for x in page.inner_text(".stepper").split("\n") if x.strip()))
+        # 展开只是为了解析细节；截图要还原用户默认看到的「一行」状态
+        if page.locator(".stepper-fold").count() > 0:
+            try:
+                page.locator(".stepper-fold").first.evaluate("el => { el.open = false }")
+            except Exception:
+                pass
         print("JOBBAR-SUB >>>", page.inner_text(".jobbar-sub").replace("\n", " "))
         # 当前设计：识别完成后字段明细就地渲染（按状态分桶折叠）；
         # 只有「没有可自动填写的项」时才需要点「查看填写预览」。

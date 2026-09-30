@@ -206,21 +206,23 @@ export function JobWorkspace(p: {
         </ul>
       </section>
 
+      {/* 备注 / 归档 / 删除都是「维护记录」而不是「推进投递」：折起来，页面主操作只剩一个 */}
       <section className="ws-section">
-        <h3>备注与标签</h3>
-        <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="面试信息 / HR 联系 / 岗位备注…" />
-        <input value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder="标签，逗号分隔（如：Agent, 杭州, 内推）" />
-        <button className="btn-sm" onClick={() => void saveNotes()}>保存备注与标签</button>
-      </section>
-
-      <section className="ws-section ws-danger">
-        <button className="btn-sm" onClick={() => void toggleArchive()}>
-          {job.archived ? "取消归档" : "归档该岗位"}
-        </button>
-        <button className="btn-sm danger" onClick={() => void deleteJob()}>
-          {confirmDelete ? `再次确认：将同时删除 ${sessions.length} 次申请记录` : "删除岗位"}
-        </button>
-        {confirmDelete && <div className="banner banner-error">该岗位包含 {sessions.length} 次申请记录，删除将同时删除对应 Session / Event，且不可恢复。</div>}
+        <details className="soft-fold ws-more">
+          <summary>更多操作（备注 / 归档 / 删除）</summary>
+          <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="面试信息 / HR 联系 / 岗位备注…" />
+          <input value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder="标签，逗号分隔（如：Agent, 杭州, 内推）" />
+          <button className="btn-sm" onClick={() => void saveNotes()}>保存备注与标签</button>
+          <div className="libbar-actions">
+            <button className="btn-sm" onClick={() => void toggleArchive()}>
+              {job.archived ? "取消归档" : "归档该岗位"}
+            </button>
+            <button className="btn-sm danger" onClick={() => void deleteJob()}>
+              {confirmDelete ? `再次确认：将同时删除 ${sessions.length} 次申请记录` : "删除岗位"}
+            </button>
+          </div>
+          {confirmDelete && <div className="banner banner-error">该岗位包含 {sessions.length} 次申请记录，删除将同时删除对应 Session / Event，且不可恢复。</div>}
+        </details>
       </section>
     </main>
   );

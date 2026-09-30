@@ -1397,3 +1397,33 @@ input.field-value:focus { border-color: var(--accent); background: var(--panel);
 /* 岗位卡片行尾的下一步动作（整卡可点，但要让人看出来） */
 .job-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .job-card-go { flex: 0 0 auto; color: var(--accent); font-weight: 600; }
+
+/* ---- 低频动作折叠（结果页步骤卡 / 资料库管理 / 岗位详情更多操作）---- */
+.soft-fold {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  margin: 6px 0;
+}
+
+.soft-fold > summary {
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.soft-fold > summary::-webkit-details-marker { display: none; }
+
+.soft-fold > summary::before {
+  content: "▸ ";
+  color: var(--text-muted);
+}
+
+.soft-fold[open] > summary::before { content: "▾ "; }
+
+.soft-fold > summary .muted { margin-left: 6px; }
+.soft-fold[open] { padding-bottom: 10px; }
+.soft-fold[open] > * + * { margin-top: 6px; }

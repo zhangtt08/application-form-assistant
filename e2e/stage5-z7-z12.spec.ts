@@ -81,6 +81,8 @@ test("Z9: Archive → 默认 Inbox 消失 → 显示归档恢复", async () => {
   await captureJob("job-ai-product.html");
   await openInbox();
   await sidePanel.locator(".job-card", { hasText: "星辰科技" }).click();
+  // 归档 / 删除收在「更多操作」折叠里：先展开（与用户真实动作一致）
+  await sidePanel.locator(".ws-more > summary").click();
   await sidePanel.getByRole("button", { name: "归档该岗位" }).click();
   await sidePanel.getByRole("button", { name: "← 返回岗位列表" }).click();
   await expect(sidePanel.locator(".job-card")).toHaveCount(0);
@@ -128,6 +130,7 @@ test("Z12: 删除带 Session 的 Job → 二次确认 → 全删且 Profile 不�
   await confirmAllAndFill();
   await openInbox();
   await sidePanel.locator(".job-card", { hasText: "星辰科技" }).click();
+  await sidePanel.locator(".ws-more > summary").click();
   await sidePanel.getByRole("button", { name: "删除岗位" }).click();
   await expect(sidePanel.getByText(/删除将同时删除对应 Session \/ Event/)).toBeVisible();
   await sidePanel.getByRole("button", { name: /再次确认/ }).click();
