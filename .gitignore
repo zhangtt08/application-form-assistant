@@ -52,3 +52,9 @@ afa-私人留档/
 **/*storageState*
 **/*cookies*.json
 **/profile-export*.json
+
+# 对第三方招聘站的原始抓取留存：含站方返回的号码/ID 形状字段，
+# 可重跑 pilot 再生，不需要进版本库（curated 的 issue markdown 仍然入库）
+real-validation-results/**/*raw*.json
+real-validation-results/**/*write-data*.json
+real-validation-results/**/*.png
