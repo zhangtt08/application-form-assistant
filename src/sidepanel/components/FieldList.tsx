@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CandidateField } from "../../types/field";
-import { getCanonicalFieldDef } from "../../rules/canonicalFields";
+import { fieldGroup, groupLabel } from "../../core";
 import { FieldCard } from "./FieldCard";
 
 export interface FieldListProps {
@@ -10,22 +10,23 @@ export interface FieldListProps {
   onEditValue: (reference: string, value: string) => void;
   onVariantChange: (reference: string, variant: "short" | "medium" | "long") => void;
   onIgnore: (reference: string) => void;
+  onUnignore?: (reference: string) => void;
+  onSwitchField?: (reference: string, fieldId: string) => void;
   onLocate: (reference: string) => void;
   onGenerateAnswer?: (reference: string) => void;
   onRevalidateAnswer?: (reference: string) => void;
 }
 
-/** 板块（canonical group）展示顺序与名称 */
+/**
+ * 板块（canonical group）展示顺序；中文名取自 core 的 groupLabel —— 板块名只允许有一处定义。
+ * "other" 不在 canonical 分组里，单独给一个界面用词。
+ */
+const GROUP_ORDER = ["basic", "education", "internship", "campus", "project", "skills", "job", "content"] as const;
+const OTHER_GROUP_LABEL = "未识别 / 需人工处理";
+
 const GROUPS: { id: string; label: string }[] = [
-  { id: "basic", label: "基本信息" },
-  { id: "education", label: "教育经历" },
-  { id: "internship", label: "实习/工作经历" },
-  { id: "campus", label: "校园经历" },
-  { id: "project", label: "项目经验" },
-  { id: "skills", label: "技能与证书" },
-  { id: "job", label: "求职意向" },
-  { id: "content", label: "长文本内容" },
-  { id: "other", label: "未识别 / 需人工处理" },
+  ...GROUP_ORDER.map((id) => ({ id, label: groupLabel(id) ?? id })),
+  { id: "other", label: OTHER_GROUP_LABEL },
 ];
 
 const STATUS_ORDER: Record<string, number> = {
@@ -59,8 +60,7 @@ function bucketOf(c: CandidateField): BucketId {
 
 function groupOf(c: CandidateField): string {
   if (c.match.fieldId !== "unknown") {
-    const def = getCanonicalFieldDef(c.match.fieldId);
-    if (def) return def.group;
+    return fieldGroup(c.match.fieldId) ?? "other";
   }
   return "other";
 }
@@ -100,6 +100,8 @@ export function FieldList(props: FieldListProps) {
         onEditValue={props.onEditValue}
         onVariantChange={props.onVariantChange}
         onIgnore={props.onIgnore}
+        onUnignore={props.onUnignore}
+        onSwitchField={props.onSwitchField}
         onLocate={props.onLocate}
         onGenerateAnswer={props.onGenerateAnswer}
         onRevalidateAnswer={props.onRevalidateAnswer}

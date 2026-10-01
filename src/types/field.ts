@@ -170,6 +170,11 @@ export interface CandidateField {
   entryIndex?: number;
   /** 用户在预览中编辑过的本次填写内容（sourceType 视为 manual，原解析内容保留在 value 中） */
   editedValue?: string;
+  /**
+   * 点「跳过这一项」之前的状态。忽略必须是**可撤销**的，
+   * 所以这里要留住原状态，否则「撤销跳过」只能靠整页重识别来恢复。
+   */
+  preIgnoreStatus?: CandidateStatus;
   /** Stage 4：开放问题元数据（intent/验证/回答） */
   openAnswer?: import("../answering/types").OpenAnswerMeta;
   /** 用户逐项确认标记 */

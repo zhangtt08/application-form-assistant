@@ -3,10 +3,14 @@
  */
 import { chromium } from "playwright-core";
 import path from "node:path";
+import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.resolve(__dirname, "../dist");
+/** Pilot 截图落 private/（已 gitignore）：判据见 docs/TEST_DATA_POLICY.md，不再往仓库根丢图 */
+const PRIVATE_SHOTS = path.resolve(__dirname, "../real-validation-results/private");
+mkdirSync(PRIVATE_SHOTS, { recursive: true });
 const listUrl = process.argv[2] ?? "https://app.mokahr.com/campus_apply/geekplus/168533?recommendCode=&fromSocial=1";
 
 const context = await chromium.launchPersistentContext("", {
@@ -70,7 +74,7 @@ if (cardCount > 0) {
     const pagesBefore = context.pages().length;
     await applyBtn.click({ force: true });
     await page.waitForTimeout(5000);
-    await page.screenshot({ path: "moka-after-apply.png", fullPage: false });
+    await page.screenshot({ path: path.join(PRIVATE_SHOTS, "moka-after-apply.png"), fullPage: false });
     const panelText = await page.evaluate(() => document.body?.innerText?.slice(0, 500) ?? "");
     console.log("AFTER-APPLY-BODY:", panelText.split(String.fromCharCode(10)).join(" | ").slice(0, 400));
     const pagesAfter = context.pages();

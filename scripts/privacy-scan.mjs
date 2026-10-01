@@ -147,6 +147,11 @@ function isReservedEmail(text) {
 const ALLOWED_TRACKED_IMAGES = new Set([
   // 只含公开职位页 + 侧边栏（字段名/风险徽章/长度），画面里没有任何填写值
   "real-validation-results/sessions/yaoji-real-write-1-preview.png",
+  // 2026-10-02 从仓库根归档进 sessions/，逐张人眼复核：
+  // 公开 JD 页（Geek-T「机器人产品助理实习生」岗位职责/任职要求），无填写值、无登录态
+  "real-validation-results/sessions/2026-09-24-moka-jd-page-public.png",
+  // 姚记 zhaopin 投递弹窗空态（只有「点击上传简历文件」占位），未填任何值
+  "real-validation-results/sessions/2026-09-25-yaoji-apply-dialog-public.png",
 ]);
 const IMAGE_RE = /\.(png|jpe?g|webp)$/i;
 const PILOT_IMAGE_RE = /^real-validation-results\/.*\.(png|jpe?g|webp)$/;

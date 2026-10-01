@@ -2,15 +2,30 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CandidateField } from "../types/field";
 import { Header } from "./components/Header";
 import { FieldList } from "./components/FieldList";
+import { FillReceipt } from "./components/FillReceipt";
 import { FillConfirmDialog } from "./components/FillConfirmDialog";
 import { ProfileEditor } from "./components/ProfileEditor";
 import { JobCard } from "./components/JobCard";
 import { TabBar, type MainTab } from "./components/TabBar";
 import { Stepper, type Step } from "./components/Stepper";
 import { useProfile } from "./hooks/useProfile";
-import { runScanPipeline, deriveStatus } from "../pipeline/scanPipeline";
-import { buildFillPlan, summarizeFillOutcome, type FillSummary } from "../pipeline/fillPlan";
-import { resolveValue } from "../profile/profileResolver";
+/**
+ * 判断逻辑一律从 `src/core` 这一门面取——它与 agent/tools.mjs 加载的是同一批源文件。
+ * （过去这里逐个 pointing 到 pipeline / rules / profile 的相对路径，
+ *   想在扩展外面复用同一套判断就只能再抄一份，两份迟早给出两个结论。）
+ */
+import {
+  assessRisk,
+  buildFillPlan,
+  deriveStatus,
+  fieldFullLabel,
+  isCanonicalFieldId,
+  resolveValue,
+  runScanPipeline,
+  summarizeFillOutcome,
+  type FillSummary,
+  type RiskAssessment,
+} from "../core";
 import {
   routeJob,
   effectiveProfileType,
@@ -19,8 +34,6 @@ import {
 } from "../profile/profileRouter";
 import { assembleProfile, loadStore, selectLibraryForDirection } from "../profile/libraryStore";
 import { profileHasContent } from "../profile/profileStore";
-import { isCanonicalFieldId } from "../rules/canonicalFields";
-import type { RiskAssessment } from "../rules/riskRules";
 import {
   getActiveJob,
   getJobHistory,
@@ -989,8 +1002,63 @@ export default function App() {
 
   const ignore = (reference: string) =>
     setCandidates((prev) =>
-      prev.map((c) => (c.raw.reference === reference ? { ...c, status: "ignored", confirmed: false } : c)),
+      prev.map((c) =>
+        c.raw.reference === reference ? { ...c, preIgnoreStatus: c.status, status: "ignored", confirmed: false } : c,
+      ),
     );
+
+  /** 撤销跳过：回到跳过前的状态。点错一下不该逼用户重扫整页。 */
+  const unignore = (reference: string) =>
+    setCandidates((prev) =>
+      prev.map((c) =>
+        c.raw.reference === reference && c.status === "ignored"
+          ? { ...c, status: c.preIgnoreStatus ?? "unknown", preIgnoreStatus: undefined }
+          : c,
+      ),
+    );
+
+  /**
+   * 把这一项改挂到次选资料字段上（低置信字段的人工纠正出路）。
+   * 重挂后**重新走一遍完整判定**（riskRules → resolver → deriveStatus），
+   * 而不是只改显示：改判的结果必须和扫描时同一口径，否则会出现
+   * 「界面上说是 SAFE，写进去却绕过了门禁」。确认状态一律作废。
+   */
+  const switchMatchedField = (reference: string, fieldId: string) => {
+    if (!profile) return;
+    setCandidates((prev) =>
+      prev.map((c) => {
+        if (c.raw.reference !== reference || !isCanonicalFieldId(fieldId)) return c;
+        const match = { ...c.match, fieldId };
+        const risk = assessRisk(fieldId, {
+          labelText: c.raw.context.labelText,
+          ariaLabel: c.raw.context.ariaLabel,
+          placeholder: c.raw.context.placeholder,
+          title: c.raw.context.title,
+          fieldsetLabel: c.raw.context.fieldsetLabel,
+          sectionTitle: c.raw.context.sectionTitle,
+        });
+        const value =
+          risk.risk === "MANUAL_ONLY"
+            ? undefined
+            : resolveValue(fieldId, profile, {
+                entryIndex: c.entryIndex,
+                maxLength: c.raw.context.maxLength,
+                profileType: effectiveType,
+              });
+        const derived = deriveStatus(c.raw, match, risk, true, value);
+        return {
+          ...c,
+          match,
+          risk: risk.risk,
+          riskReason: derived.riskReason ?? risk.reason,
+          value: value ?? undefined,
+          status: derived.status,
+          editedValue: undefined,
+          confirmed: false,
+        };
+      }),
+    );
+  };
 
   const locate = async (reference: string) => {
     const target = candidates.find((c) => c.raw.reference === reference);
@@ -1029,7 +1097,9 @@ export default function App() {
     anyPending > 0
       ? `还有 ${anyPending} 项需要你确认`
       : filledList.length > 0
-        ? `已填好 ${filledList.length} 项，请核对后自行点击提交`
+        ? fillSummary && fillSummary.manualBlocked > 0
+          ? `已填好 ${filledList.length} 项，另有 ${fillSummary.manualBlocked} 项按安全规则留给你本人填写；请核对后自行点击提交`
+          : `已填好 ${filledList.length} 项，请核对后自行点击提交`
         : undone
           ? "网页上的内容已撤销，可重新识别"
           : candidates.length === 0
@@ -1239,6 +1309,23 @@ export default function App() {
                 </div>
               )}
 
+              {(() => {
+                /* 空状态的出路：识别到了字段但资料库里没有内容时，光说「暂无可填项」等于把问题丢回给用户。
+                   这里列出**具体缺哪几栏**并给一个跳转 —— 缺的是客观资料，补一次以后每次投递都能用。 */
+                const missing = candidates.filter((c) => c.status === "empty" && isCanonicalFieldId(c.match.fieldId));
+                if (missing.length === 0) return null;
+                const names = Array.from(new Set(missing.map((c) => fieldFullLabel(c.match.fieldId))));
+                return (
+                  <div className="banner banner-review" data-missing-count={missing.length}>
+                    这个页面有 {missing.length} 栏你资料库里还没有内容：{names.slice(0, 6).join("、")}
+                    {names.length > 6 ? ` 等 ${names.length} 项` : ""}。
+                    <button type="button" className="btn-sm" onClick={() => setTab("profile")}>
+                      去补这几项
+                    </button>
+                  </div>
+                );
+              })()}
+
               {previewRevealed && (
                 <FieldList
                 candidates={candidates}
@@ -1247,18 +1334,15 @@ export default function App() {
                 onEditValue={editValue}
                 onVariantChange={changeVariant}
                 onIgnore={ignore}
+                onUnignore={unignore}
+                onSwitchField={switchMatchedField}
                 onLocate={(r) => void locate(r)}
                 onGenerateAnswer={(r) => void handleGenerateAnswer(r)}
                 onRevalidateAnswer={(r) => void handleRevalidateAnswer(r)}
                 />
               )}
 
-              {phase === "done" && fillSummary && (
-                <div className="banner banner-ok">
-                  填写完成 —— 成功 {fillSummary.filled}，失败 {fillSummary.failed}，跳过 {fillSummary.skipped}。
-                  失败与高风险字段请人工填写；最终提交请自行点击。
-                </div>
-              )}
+              {phase === "done" && <FillReceipt candidates={candidates} onLocate={(r) => void locate(r)} onUnignore={unignore} />}
             </>
           )}
         </>

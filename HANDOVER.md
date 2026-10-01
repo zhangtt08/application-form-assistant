@@ -269,20 +269,48 @@ ATS 简历自动投填浏览器扩展（Manifest V3，TS strict + Vite 三入口
 
 ## 9. 版本管理与迁移
 
-git 已建。历史（新→旧）：`e9b1329` privacy phase 2 · `f5fd15b` privacy 文档整改 ·
-`f085ea2` privacy phase 1 · `9ac913d` 前端设计/可用性 + 写入链路 4 个真实缺陷 ·
-`c719f34` 姚记 real-write pilot · `d042026` baseline（tag `pilot-v1-baseline`）。
+git 已建，`main` 在本机。**提交历史用 `git log --oneline` 现查，不要引用本文里的哈希**
+（本文曾固化过一批 `e9b1329 / f5fd15b / f085ea2 / 9ac913d / c719f34 / d042026`，
+其中只有 `d042026`（tag `pilot-v1-baseline`）还有意义 —— 固化哈希就是给自己造一条会腐烂的假事实）。
 
-`.gitignore` 排除：`node_modules/ dist/ coverage/ .vite/ playwright-report/ e2e-report/
-test-results/ smoke/shots/ real-validation-results/private/ _transfer-backup/ *.log
-*.timestamp-*.mjs .env*`。
+`.gitignore` 的实际口径（改这条要同步改这里）：
 
-新机器：`npm install` → 按 §2 跑三连 → `npx playwright install chromium` → build → 加载 `dist/`。
-验收：单测全绿（系统 node）+ 姚记站 Capture 显示「姚记科技 · 游戏测试工程师-27届秋招」+
-`e2e/scan-does-not-write.spec.ts` 通过。
+```
+依赖与产物     node_modules/ dist/ coverage/ .vite/ *.timestamp-*.mjs
+测试运行目录   test-results/ playwright-report/ e2e-report/ smoke/shots/
+可再生报告     compatibility-results/        ← npm run test:compat 现跑现写，不入库
+Agent          agent/.endpoint               ← server.mjs 每次启动写的实际地址（端口被占会 +1）
+临时与本机     *.log *.tmp .tmp/ .env .env.*
+PII（硬约束）  real-validation-results/private/  afa-私人留档/
+              **/*-real-profile*.json  **/*resume-real*  **/*storageState*
+              **/*cookies*.json  **/profile-export*.json
+```
+
+**2026-10-02 目录精简**（判据是「这张图/这份文件是不是唯一副本，以及它能不能再生」）：
+
+| 原来在根上的东西 | 处置 | 理由 |
+|---|---|---|
+| `moka-after-apply.png` | `git mv` → `real-validation-results/sessions/2026-09-24-moka-jd-page-public.png` | 逐张人眼核对过：公开 JD 页（极氪「机器人产品助理实习生」岗位职责），无填写值、无登录态 → 属可入库的公开页面原料，只是放错了地方 |
+| `real-pilot-yaoji.png` | `git mv` → `real-validation-results/sessions/2026-09-25-yaoji-apply-dialog-public.png` | 姚记投递弹窗**空态**（只有「点击上传简历文件」占位），未填任何值 |
+| `real-validation-results/private/*.png`（2 张含填写值） | **移出仓库** → `C:\Users\Administrator\Desktop\afa-私人留档\` | 画面里能读出真实雇佣单位与起止时间。gitignored 不等于该住在仓库目录里 |
+| `compatibility-results/` | `git rm --cached` + 删除 | `e2e/compat/compat-report.spec.ts` 的 `afterAll` 每次跑都重写它，纯可再生 |
+| `_transfer-backup/` | **移出仓库** → `afa-私人留档\transfer-backup-from-afa\` | 逐个 `cmp` 过：里面 15 个 `.ts` 全是当前 `src/` 同名文件的**旧版**（字节数更小、git 历史里都有），0 个「只在备份里」的文件。4 个一次性迁移脚本（`align_e2e.py` 等）不在 git 历史里，所以搬走而不是删掉 |
+| 两张根图的原产出脚本 | `scripts/moka-pilot.mjs` / `scripts/yaoji-pilot.mjs` 的截图改落 `real-validation-results/private/` | 政策本来就写「真实 Pilot 截图默认 private」，是脚本没照做才把图丢到根上 |
+
+入库位与移动后的两张图已登记进 `scripts/privacy-scan.mjs` 的 `ALLOWED_TRACKED_IMAGES`
+（不给目录整体豁免 —— 整体豁免正是当年漏掉 filled-form 截图的那种失败）。
+移完 `npm run privacy:scan` = **0 ERROR / 0 WARN**。
+
+新机器：`npm install` → 按 §2 跑三连 → build → Edge 加载 `dist/`。
+**不需要 `npx playwright install`**：`e2e/helpers.ts` 的 `resolveChromeExecutable()` 按
+`AFA_CHROME` → `%LOCALAPPDATA%\ms-playwright\chromium-*`（取最新 revision）的顺序找现成二进制。
+
+验收：单测全绿 + typecheck 零输出 + build 三入口 + `npm run privacy:scan` 0 ERROR +
+`e2e/scan-does-not-write.spec.ts` 通过 + 姚记站 Capture 显示「姚记科技 · 游戏测试工程师-27届秋招」。
 
 **跨机拷贝历史事故**：2026-09-24 晚曾产生 182 个 `*-<12位hex>.ts` 双胞胎文件并造成两机分叉。
-再见这种文件名即传输残留；备份件留在 gitignored 的 `_transfer-backup/`。
+再见这种文件名即传输残留。当年的备份已搬出仓库（见上表），仓库里不再有 `_transfer-backup/`。
+
 
 ## 10. 本轮（2026-09-29）交付化改造 —— 从「能识别但填不进」到可交付
 

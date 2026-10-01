@@ -2,7 +2,13 @@ import { useState } from "react";
 import type { CandidateField, ContentSourceType } from "../../types/field";
 import { RiskBadge } from "./RiskBadge";
 import { ConfidenceBadge } from "./ConfidenceBadge";
-import { getCanonicalFieldDef } from "../../rules/canonicalFields";
+import {
+  explainCandidate,
+  fieldFullLabel,
+  getCanonicalFieldDef,
+  LEVEL_TEXT,
+  type MatchExplanation,
+} from "../../core";
 import { profileTypeLabel, type ProfileType } from "../../job/profileTypes";
 
 export interface FieldCardProps {
@@ -18,6 +24,10 @@ export interface FieldCardProps {
   onEditValue: (reference: string, value: string) => void;
   onVariantChange: (reference: string, variant: "short" | "medium" | "long") => void;
   onIgnore: (reference: string) => void;
+  /** 撤销跳过：回到跳过前的状态（否则用户点错了只能整页重识别） */
+  onUnignore?: (reference: string) => void;
+  /** 把这一项改挂到次选资料字段上（低置信字段的人工纠正入口） */
+  onSwitchField?: (reference: string, fieldId: string) => void;
   onLocate: (reference: string) => void;
   onGenerateAnswer?: (reference: string) => void;
   onRevalidateAnswer?: (reference: string) => void;
@@ -171,11 +181,69 @@ function labelOf(raw: CandidateField["raw"]): string {
   return raw.context.labelText || raw.context.placeholder || raw.context.name || raw.context.id || "(未命名字段)";
 }
 
+/**
+ * 「为什么是这个字段」——普通用户可见的匹配依据（不再只在开发者模式里以 JSON 出现）。
+ *
+ * 理由：Matcher 一直产出 evidence，但界面上只留一个百分比。用户看到「92%」并不能核对
+ * 什么——他要的是「它凭什么说这一栏是我的手机号」。现在把同一批依据翻成人话摊开，
+ * 并把次选候选露出来：低置信时用户可以一键改挂，而不是只能整项跳过或去网页上手打。
+ * 结论仍由 matcher + riskRules + deriveStatus 决定，这里一个字都不改判。
+ */
+function WhyMatchedBlock(p: {
+  explain: MatchExplanation;
+  candidate: CandidateField;
+  onSwitchField?: (reference: string, fieldId: string) => void;
+}) {
+  const { explain, candidate } = p;
+  const switchable =
+    !!explain.alternative &&
+    !!p.onSwitchField &&
+    candidate.match.fieldId !== "unknown" &&
+    (candidate.status === "ready" || candidate.status === "need-confirm" || candidate.status === "filled");
+  return (
+    <details className="why-box" data-level={explain.level}>
+      <summary className="why-summary">
+        为什么是「{explain.fieldLabel}」
+        <span className={`why-level level-${explain.level}`} data-level={explain.level}>
+          {LEVEL_TEXT[explain.level]}
+        </span>
+      </summary>
+      <p className="why-headline">{explain.headline}</p>
+      {explain.signals.length > 0 && (
+        <ul className="why-signals">
+          {explain.signals.map((s, i) => (
+            <li key={i}>
+              <span className="why-src">{s.sourceLabel}</span>
+              <span className="why-text">{s.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {explain.alternative && (
+        <div className="why-alt">
+          也可能是「{explain.alternative.fieldLabel}」（把握 {explain.alternative.percent}%）
+          {switchable && (
+            <button
+              type="button"
+              className="btn-sm"
+              onClick={() => p.onSwitchField?.(candidate.raw.reference, candidate.match.runnerUpFieldId!)}
+            >
+              改用这一项
+            </button>
+          )}
+        </div>
+      )}
+      {explain.blockedReason && <div className="why-blocked">{explain.blockedReason}</div>}
+    </details>
+  );
+}
+
 export function FieldCard(props: FieldCardProps) {
   const { candidate, devMode } = props;
   const { raw, match, risk, status } = candidate;
   const [showEvidence, setShowEvidence] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const explain = explainCandidate(candidate);
 
   const statusInfo = STATUS_TEXT[status];
   // 内容框：主观/长文本类字段即使已经写入也允许就地改后重写（改完不回写资料库）
@@ -293,16 +361,17 @@ export function FieldCard(props: FieldCardProps) {
                 </>
               )}
               <span className="field-meta-sep">·</span>
-              {/* canonical id 与百分比置信度是开发者视角的东西：普通用户看到 basic.name / 99%
-                  只会更困惑。需要时到「设置 → 开发者模式」打开。 */}
+              {/* 用户看的是中文资料名（「教育经历 · 学校」），canonical id 与百分比留在开发者模式。
+                  真机教训：界面上写 basic.name / 99% 时用户既核对不了也复制不了，只会更困惑。 */}
+              <span className="field-meta-label" data-field-id={match.fieldId}>
+                {fieldFullLabel(match.fieldId)}
+              </span>
+              {candidate.value && candidate.value.entryCount && candidate.value.entryCount > 1 ? (
+                <span className="muted small">（第{(candidate.value.entryIndex ?? 0) + 1}/{candidate.value.entryCount}条）</span>
+              ) : null}
               {devMode && (
                 <>
-                  <span className="field-meta-id" data-field-id={match.fieldId}>
-                    {match.fieldId === "unknown" ? "未匹配到资料" : match.fieldId}
-                    {candidate.value && candidate.value.entryCount && candidate.value.entryCount > 1
-                      ? `（第${(candidate.value.entryIndex ?? 0) + 1}/${candidate.value.entryCount}条）`
-                      : ""}
-                  </span>
+                  <span className="field-meta-sep">·</span>
                   <ConfidenceBadge confidence={match.confidence} />
                 </>
               )}
@@ -344,6 +413,12 @@ export function FieldCard(props: FieldCardProps) {
             {manualLike && <div className="manual-note">{candidate.riskReason}</div>}
           </>
         )}
+
+        {/* 匹配依据：非开放题、且确实给出了结论（匹配到字段 / 被拦下）时才值得露出。
+            开放题已经有自己的事实验证区块，不再叠一层。 */}
+        {!candidate.openAnswer && (match.fieldId !== "unknown" || explain.blockedReason) && (
+          <WhyMatchedBlock explain={explain} candidate={candidate} onSwitchField={props.onSwitchField} />
+        )}
       </div>
 
       <div className="field-actions">
@@ -360,9 +435,27 @@ export function FieldCard(props: FieldCardProps) {
         <button className="btn-sm" onClick={() => props.onLocate(raw.reference)}>
           定位字段
         </button>
-        {status !== "filled" && confirmable && (
-          <button className="btn-sm" onClick={() => props.onIgnore(raw.reference)}>
-            忽略
+        {status === "ignored" ? (
+          /* 跳过得能撤销：否则用户点错一下「忽略」，唯一的出路就是整页重新识别 */
+          <button className="btn-sm" onClick={() => props.onUnignore?.(raw.reference)}>
+            撤销忽略
+          </button>
+        ) : (
+          status !== "filled" && (
+            <button className="btn-sm" onClick={() => props.onIgnore(raw.reference)}>
+              忽略这一项
+            </button>
+          )
+        )}
+        {status === "filled" && candidate.editedValue != null && (
+          /* 改过值又已经填过一次：必须给出「把新值再写进去」的入口，否则改动只活在侧边栏里 */
+          <button
+            className="btn-sm"
+            onClick={() => {
+              props.onToggleConfirm(raw.reference);
+            }}
+          >
+            勾选以重写这一项
           </button>
         )}
         <span className="spacer" />

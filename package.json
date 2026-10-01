@@ -16,7 +16,9 @@
     "test:e2e:headed": "playwright test --headed",
     "eval:generation": "vitest run --config vitest.eval.config.ts",
     "test:compat": "playwright test e2e/compat/",
-    "privacy:scan": "node scripts/privacy-scan.mjs"
+    "privacy:scan": "node scripts/privacy-scan.mjs",
+    "agent:serve": "node agent/server.mjs",
+    "agent:mcp": "node agent/mcp-server.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

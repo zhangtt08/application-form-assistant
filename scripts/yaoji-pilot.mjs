@@ -4,10 +4,12 @@
  */
 import { chromium } from "playwright-core";
 import path from "node:path";
+import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.resolve(__dirname, "../dist");
+const PRIVATE_SHOTS = path.resolve(__dirname, "../real-validation-results/private");
 const url = process.argv[2] ?? "https://zhaopin.yaoji.cn/job/065bf5c4-c421-490e-9b9e-e337d9d6f75f";
 
 const context = await chromium.launchPersistentContext("", {
@@ -147,5 +149,8 @@ if ((await captureBtn.count()) > 0) {
   console.log("CAPTURE:", jobText.replace(/\s+/g, " ").slice(0, 150));
 }
 
-await page.screenshot({ path: "real-pilot-yaoji.png", fullPage: false });
+// Pilot 截图一律落 real-validation-results/private/（已 gitignore）：画面里可能出现用户填写值。
+// 入库判据见 docs/TEST_DATA_POLICY.md —— 写入正确性由结构化记录证明，不由截图证明。
+await mkdirSync(PRIVATE_SHOTS, { recursive: true });
+await page.screenshot({ path: path.join(PRIVATE_SHOTS, "yaoji-pilot.png"), fullPage: false });
 await context.close();

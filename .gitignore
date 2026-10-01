@@ -1,29 +1,54 @@
+# ---------------------------------------------------------------------------
 # 依赖与构建产物（npm install / npm run build 重建）
+# ---------------------------------------------------------------------------
 node_modules/
 dist/
 coverage/
 .vite/
-
-# Playwright / 测试运行产物（trace、截图、错误快照）
-playwright-report/
-e2e-report/
-test-results/
-
-# smoke 脚本截图产物（smoke.py 的 SHOTS 输出目录，可重跑再生）
-smoke/shots/
-
-# 日志
-*.log
-
-# Vite 构建残留
 *.timestamp-*.mjs
 
-# 跨机传输备份（182 个 hash 双胞胎修复期的备份与 e2e 全量日志，仅本机留存，不入库）
-_transfer-backup/
+# ---------------------------------------------------------------------------
+# 测试与验证产物（跑一遍就能再生，入库只会让 diff 变噪音）
+#   - test-results/ playwright-report/ e2e-report/ : Playwright 运行目录
+#   - compatibility-results/ : npm run test:compat 写出的 report.md（矩阵结论
+#     本身记在 docs/ 与 real-validation-results/，报告文件不需要入库）
+#   - smoke/shots/ : smoke.py 的截图输出
+# ---------------------------------------------------------------------------
+test-results/
+playwright-report/
+e2e-report/
+compatibility-results/
+smoke/shots/
 
-# Pilot 原始证据中含填写值的截图 / 导出（本地留存，绝不入库，见 docs/TEST_DATA_POLICY.md）
-real-validation-results/private/
+# 日志与临时件
+*.log
+*.tmp
+.tmp/
 
-# 本机环境变量（本项目目前没有，防御性忽略）
+# ---------------------------------------------------------------------------
+# Agent API（personal-agent-hub/docs/AGENT_API_STANDARD.md）
+#   .endpoint 是 server.mjs 每次启动写的实际监听地址（端口被占会 +1），可再生
+# ---------------------------------------------------------------------------
+agent/.endpoint
+
+# ---------------------------------------------------------------------------
+# 本机环境变量。本项目目前不读任何 env 变量（模型 Key 存 chrome.storage.local，
+# 只在这台机器的浏览器里），这一条是防御性的：也不要有人以后往里写 Key。
+# ---------------------------------------------------------------------------
 .env
 .env.*
+
+# ---------------------------------------------------------------------------
+# 真实个人信息（PII）—— 判据见 docs/TEST_DATA_POLICY.md，这一节是它的兜底
+#   含填写值的 Pilot 截图 / 真实简历原文 / Cookie / storageState / 导出快照
+#   一律只留本机，绝不入库。
+# ---------------------------------------------------------------------------
+real-validation-results/private/
+# 从仓库移出的私人留档（万一有人把它拷回项目目录，这条挡住入库）
+afa-私人留档/
+# 真实资料数据与浏览器导出：任何位置的这类命名都不入库
+**/*-real-profile*.json
+**/*resume-real*
+**/*storageState*
+**/*cookies*.json
+**/profile-export*.json

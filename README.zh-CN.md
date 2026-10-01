@@ -9,25 +9,81 @@
 
 ## 快速开始
 
-前置要求：Node.js 18+、npm、Chrome 或 Edge 114+。
+前置要求：Node.js 18+、npm、Microsoft Edge（或 Chrome）114+。
 
 ```bash
 git clone https://github.com/<你的账号>/application-form-assistant.git
 cd application-form-assistant
 npm install
-npm run build
+npm run build          # 产出 dist/：侧边栏 + content script + service worker
 ```
 
-然后在 `chrome://extensions`（或 `edge://extensions`）打开「开发者模式」→「加载已解压的扩展程序」→ 选择生成的 `dist/` 目录。
+**装进 Edge**（`dist/` 是构建产物，不入库；改过代码要重新 `npm run build`，
+然后回扩展卡片上按一次刷新图标）：
+
+1. Edge 地址栏打开 `edge://extensions`；
+2. 左侧栏底部打开「**开发人员模式**」开关；
+3. 点「**加载解压缩的扩展**」，选择项目里生成的 **`dist/`** 目录；
+4. （可选）在工具栏固定这个扩展，然后打开任意网申页面；
+5. 打开侧边栏：点工具栏上的扩展图标 → **Application Form Assistant**
+   （或右键页面 → 「更多操作」→ 选它）；
+6. 第一次用：先到「**资料**」页粘贴简历文本 —— 解析完全离线，不联网、不上传；
+   然后回「**投递**」页点「开始识别」。
+
+装进 Chrome 是同一套：`chrome://extensions` → 开发者模式 → 加载已解压的扩展程序 → 选 `dist/`。
 
 常用命令：
 
 ```bash
-npm test                 # 单元测试（Vitest，离线、确定、免费）
-npm run test:e2e         # Playwright 端到端测试
-python smoke/smoke.py    # 真实 Chromium UI 冒烟测试（截图见 smoke/shots/）
+npm test                 # 单元测试（Vitest + jsdom，离线、确定、免费）
+npm run typecheck        # tsc --noEmit
+npm run build            # 三个构建目标：sidepanel / content / background
+npm run test:e2e         # Playwright 端到端（真实 Chromium + dist/ 扩展）
+npm run test:compat      # 兼容性矩阵 → compatibility-results/report.md（可再生，不入库）
+npm run privacy:scan     # 扫一遍入库文件里的个人标识与凭据，必须 0 ERROR
+npm run agent:serve      # 本地 Agent API → http://127.0.0.1:8797
+npm run agent:mcp        # MCP stdio 桥（同一套工具）
+python smoke/smoke.py    # 真实 Chromium UI 冒烟测试（截图见 smoke/shots/，不入库）
 npm run eval:generation  # 生成质量评测（需要 Provider，见下文）
 ```
+
+## 安全红线（这是产品定义，不是待优化的限制）
+
+下面每一条都既在代码里强制，也有测试守着：
+
+| 红线 | 落在哪 |
+| --- | --- |
+| **永不点击提交** —— 扩展负责填，人负责提交 | `src/rules/ignoreRules.ts`（`BLOCKED_ACTIONS`）+ `e2e/safety-flow.spec.ts` |
+| **风险字段只允许手动** —— 承诺、声明、电子签名、是否接受调剂、已阅读并同意、背调授权、签证/工作许可，一律不代填：这些不是「资料」，是替人做保证 | `src/rules/riskRules.ts`（`MANUAL_ONLY_KEYWORDS`） |
+| **扫描阶段绝不写 DOM** —— scanner 只读；每一次写入都必须经过「用户点确认」才生成的 ConfirmedFillPlan | `src/content/scanner.ts` + `src/pipeline/fillPlan.ts` + `e2e/scan-does-not-write.spec.ts` |
+| **绝不编造值** —— 资料库没有就留空；超出字数上限、数字框收不下的值交回人工，不截断也不改写 | `src/pipeline/scanPipeline.ts`（`deriveStatus`） |
+| **人口统计/受保护类别不是资料** —— 民族、种族、残障、兵役、EEO 自证题即使别名命中也绝不自动写 | `src/matching/matcher.ts`（`PROTECTED_CLASS_MARKERS`） |
+| **别人的字段不是你的** —— 标签写着「推荐人 / 内推人 / 家长 / 紧急联系人」时，不许拿你本人的姓名手机去顶 | `src/matching/matcher.ts`（`OTHER_PERSON_MARKERS`） |
+| **只在本地** —— 无后端、无埋点；唯一的外呼是你明确配置过的 AI Provider，Key 只存 `chrome.storage.local` | `src/generation/provider.ts` |
+
+## Agent API / MCP
+
+本产品是浏览器扩展，**没有常驻服务**，所以 Agent 是一个独立的本地进程（端口 **8797**）：
+
+```bash
+npm run agent:serve      # HTTP  → http://127.0.0.1:8797
+npm run agent:mcp        # MCP stdio 桥（任何 MCP 客户端可直接接同一套工具）
+```
+
+八个工具，全部 `afa.` 前缀、全部 `risk: 'read'`：
+`list_fields`（可填字段清单）、`read_profile`（**脱敏**档案摘要）、`validate_profile`、
+`scan_form`（对给定 DOM 只读扫描 + 匹配建议）、`match_question`（单条问题为什么匹配到某字段）、
+`plan_fill`（生成填写计划 JSON，**不落 DOM**）、`export_results`（导出真实验证/兼容性产物）、
+`storage_overview`（扩展存储键登记表）。
+
+它们**不重写任何判断**：`agent/tools.mjs` import 的是 `src/core`，
+而 `src/core` re-export 的正是侧边栏用的同一批 matcher / 风险分级 / 扫描管线 / 写入门禁源码。
+所以 Agent 报出的置信度与界面上的徽章**不可能各说一套**。
+这里刻意**没有**任何能写页面、点提交、向第三方站点写入的工具 ——
+把「提交申请」包成一个工具，等于把上面那条红线拆掉。
+
+详见 [`agent/README.md`](agent/README.md)（契约、参数 schema、以及 jsdom 无布局引擎这一条环境补偿）。
+
 
 ## UI 交互模型
 
@@ -52,8 +108,24 @@ npm run eval:generation  # 生成质量评测（需要 Provider，见下文）
 3. **投递视图**先给结论再给细节：`已填写 N / 待补资料 M / 需人工 K`，
    字段明细按「需要你确认 / 已自动填写 / 需人工处理」折叠分桶（也可切「按板块」看）。
    已按资料库填好的客观信息**一行一条**（字段 · 内容 · 来源），点开才看完整卡片 ——
-   十几个字段不再铺成两屏滚动；`basic.name` 这类内部标识和置信度百分比只在
-   「设置 → 开发者模式」里出现。填完后主按钮是出路「投递下一个岗位」，不是一个灰掉的死句。
+   十几个字段不再铺成两屏滚动。
+   **每张卡片都有「为什么是这个字段」**：展开后能看到匹配到的资料项中文名（如「教育经历 · 学校」）、
+   把握等级，以及逐条依据（命中了哪个信号源：字段标签 / aria-label / 提示文字 / 控件 name /
+   所在板块加成 / 网页自己声明的 `autocomplete`、`type`）。内部标识 `basic.name` 与百分比
+   仍然只在「设置 → 开发者模式」出现，但**依据本身不再藏起来**：一个 92% 的数字用户核对不了什么，
+   「它凭什么说这一栏是我的手机号」才是能核对的话。
+   **两个字段分不开时**（次选候选），卡片上给一个「改用这一项」：改挂后**重新走一遍完整判定**
+   （风险分级 → 取值 → 状态推导），不是只换个标签，确认状态一并作废。
+   **忽略可以撤销**：点错一下不必整页重识别。
+   填完后主按钮是出路「投递下一个岗位」，不是一个灰掉的死句。
+   **缺资料的出路**：识别到了某栏但资料库里没有内容时，面板会列出**具体缺哪几项**并给一个
+   「去补这几项」的跳转，而不是留一句「暂无可填项」让用户自己猜。
+   **填写结果回执**：写完不再只报一行「成功 N 失败 N」，而是分组摊开 ——
+   已填写（可逐项定位回页面）、其中哪几项请重点核对（把握不到「高」这一档或属主观表达）、
+   被红线拦下的**以及为什么**（承诺/声明/调剂类不代填、语境门禁排除的登录框、
+   网页给的选项里没有你资料里那个答案、超出字数上限）、没填进去的与失败原因、
+   资料库里没有内容的、没认出来的、你忽略的。
+   扩展**故意没做**的事如果不说出来，就会被当成「软件漏填了」—— 这是回执要解决的问题。
    **一屏只留一个主操作**：识别跑完后四行进度条收成一行（`识别完成 · 4/4 步 · 已识别 17 个字段…`，
    点开才看逐步明细，有失败步时自动展开），「重新识别 / 撤销本次填写」降成文字链，
    「我已完成投递」降成小按钮，当前页面 URL 只在开发者模式显示。
@@ -181,16 +253,30 @@ Job（JobRecord，一个岗位机会，status 由用户手动维护）
 ```
 public/manifest.json     MV3 manifest（侧边栏 + Service Worker + 全框架 content script）
 src/
+  core/                  ★ 扩展与 Agent 共用的纯逻辑门面：字段中文名 + 「为什么匹配到这个字段」
+                         的解释层，并 re-export matcher / 风险分级 / 扫描管线 / 填写计划门禁 /
+                         Profile 校验 / 岗位解析。判断只在这里有一份。
   background/            MV3 Service Worker（标签页 / 运行时编排）
   content/               页面内连接器与字段写入（所有 frame 生效）
   sidepanel/             React UI：投递 / 岗位 / 资料 / 设置（底部导航）
   pipeline/              识别 → 匹配 → 写入 的流水线编排
   matching/              字段 ↔ 资料匹配
   profile/               多资料库存储（afa.profiles.v2）+ 纯文本简历解析
-  rules/                 确定性规则（是否题极性匹配等）
+  rules/                 确定性规则（别名表 / 风险分级 / 是否题极性 / 忽略清单）
   answering/ generation/ job/ context/ workspace/ compatibility/ types/ utils/
-tests/  e2e/  smoke/  evaluation/    单测（Vitest）· e2e（Playwright）· 冒烟 · 生成评测
+agent/                   本地 Agent API（server.mjs + tools.mjs + mcp-server.mjs + ts-loader.mjs）
+                         见 agent/README.md
+tests/ e2e/ smoke/ evaluation/    单测（Vitest）· e2e（Playwright）· 冒烟 · 生成评测
+docs/                  设计原则、测试数据政策、隐私与安全审计
+real-validation-results/          真实站点验证证据（sessions / issues；含填写值的截图在 private/，不入库）
 ```
+
+主要存储键：`afa.profiles.v2`（shared + 多资料库，自动从旧 `afa.profile.v1` 迁移）、
+`afa.jobs.v2` / `afa.sessions.v2` / `afa.events.v1`（岗位生命周期）、`afa.apply.prefs.v1`（行为开关）。
+
+**仓库卫生**：构建产物、测试运行目录、可再生的验证报告、以及任何能读出填写值的截图，
+一律 gitignore。真实简历原文、联系方式、Cookie 不进仓库 ——
+由 `npm run privacy:scan` 把守，判据写在 [`docs/TEST_DATA_POLICY.md`](docs/TEST_DATA_POLICY.md)。
 
 ## 许可证
 
