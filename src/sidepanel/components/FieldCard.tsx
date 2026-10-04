@@ -28,6 +28,17 @@ export interface FieldCardProps {
   onUnignore?: (reference: string) => void;
   /** 把这一项改挂到次选资料字段上（低置信字段的人工纠正入口） */
   onSwitchField?: (reference: string, fieldId: string) => void;
+  /**
+   * 低置信字段的人工放行：核对过确实是这一栏之后由人点这一下。
+   * 没有它，「把握不足」就只是一句劝退的话，用户唯一的出路是去网页上手打。
+   */
+  onConfirmLowConfidence?: (reference: string) => void;
+  /** 「这一站以后都别填这一项」：写成站点记忆，下次扫描直接生效 */
+  onBlockOnSite?: (reference: string) => void;
+  /** 撤销一条站点设定（改错了要能反悔，而且不能靠重扫整页） */
+  onUndoSiteRule?: (ruleId: string) => void;
+  /** 当前招聘站主机名；为空 = 不知道在哪个站，就不许提「这一站以后」的承诺 */
+  siteHost?: string;
   onLocate: (reference: string) => void;
   onGenerateAnswer?: (reference: string) => void;
   onRevalidateAnswer?: (reference: string) => void;
@@ -264,6 +275,22 @@ export function FieldCard(props: FieldCardProps) {
   const confirmable =
     (status === "ready" || status === "need-confirm") && !!candidate.value && risk !== "MANUAL_ONLY";
 
+  /**
+   * 「这一站以后都别填」只在三个条件同时成立时给：
+   * 知道在哪个站（否则记不下来）、这一栏识别出了具体字段（否则记的是个匿名控件，下次会误伤）、
+   * 而且当前不是「已经填了 / 已经是站点设定 / 本来就轮不到自动填」。
+   */
+  const canBlockOnSite =
+    !!props.siteHost &&
+    !!props.onBlockOnSite &&
+    !candidate.siteRule &&
+    match.fieldId !== "unknown" &&
+    status !== "ignored" &&
+    status !== "filled" &&
+    status !== "manual" &&
+    status !== "excluded" &&
+    status !== "unsupported";
+
   const cardCls =
     status === "manual"
       ? "field-card card-manual"
@@ -319,6 +346,22 @@ export function FieldCard(props: FieldCardProps) {
 
       {status === "failed" && candidate.fillDetail && (
         <p className="hint">没填进去：{candidate.fillDetail}</p>
+      )}
+      {candidate.siteRule && (
+        <p className="hint small" data-site-rule={candidate.siteRule.kind}>
+          {candidate.siteRule.kind === "map"
+            ? `按你在 ${candidate.siteRule.host} 上定过的设定，这一栏归到「${fieldFullLabel(match.fieldId)}」${
+                candidate.siteRule.overriddenFieldId
+                  ? `（自动识别本来给的是「${fieldFullLabel(candidate.siteRule.overriddenFieldId)}」）`
+                  : ""
+              }。`
+            : `按你在 ${candidate.siteRule.host} 上定过的设定，这一栏不自动填。`}
+          {props.onUndoSiteRule && (
+            <button type="button" className="link-btn" onClick={() => props.onUndoSiteRule?.(candidate.siteRule!.ruleId)}>
+              取消这条站点设定
+            </button>
+          )}
+        </p>
       )}
       {raw.frameId != null && raw.frameId !== 0 && (
         <p className="hint small">该字段在页面内嵌框架里，已按框架单独写入</p>
@@ -432,13 +475,31 @@ export function FieldCard(props: FieldCardProps) {
             确认填写
           </label>
         )}
+        {status === "low-confidence" && (
+          /* 低置信不静默填写，但也不能只说一句「把握不足」就把活丢回给人：
+             这一句就是那条出口 —— 人核对过确实是这样，点一下就进入正常填写通道。 */
+          <button
+            type="button"
+            className="btn-sm btn-confirm-low"
+            data-action="confirm-low"
+            onClick={() => props.onConfirmLowConfidence?.(raw.reference)}
+          >
+            核对过了，确认要填这一项
+          </button>
+        )}
         <button className="btn-sm" onClick={() => props.onLocate(raw.reference)}>
           定位字段
         </button>
         {status === "ignored" ? (
           /* 跳过得能撤销：否则用户点错一下「忽略」，唯一的出路就是整页重新识别 */
-          <button className="btn-sm" onClick={() => props.onUnignore?.(raw.reference)}>
-            撤销忽略
+          <button
+            className="btn-sm"
+            data-action="unignore"
+            onClick={() =>
+              candidate.siteRule ? props.onUndoSiteRule?.(candidate.siteRule.ruleId) : props.onUnignore?.(raw.reference)
+            }
+          >
+            {candidate.siteRule ? "撤销这条站点设定" : "撤销忽略"}
           </button>
         ) : (
           status !== "filled" && (
@@ -446,6 +507,19 @@ export function FieldCard(props: FieldCardProps) {
               忽略这一项
             </button>
           )
+        )}
+        {canBlockOnSite && (
+          /* 逐字段出口之三：不只是「这次跳过」——同一站点每次都有一栏不想让它碰，
+             说一次就记住，下次扫描直接跳过这一栏（设置页可撤销）。 */
+          <button
+            type="button"
+            className="btn-sm"
+            data-action="block-on-site"
+            title={`以后在 ${props.siteHost} 上都不自动填这一栏`}
+            onClick={() => props.onBlockOnSite?.(raw.reference)}
+          >
+            这一站以后都别填
+          </button>
         )}
         {status === "filled" && candidate.editedValue != null && (
           /* 改过值又已经填过一次：必须给出「把新值再写进去」的入口，否则改动只活在侧边栏里 */

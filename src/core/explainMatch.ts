@@ -64,6 +64,9 @@ function toSignal(evidence: string): MatchSignal | null {
   if (source === "options") return { source, sourceLabel: "网页给的选项", text: text.replace(/^\[|\]$/g, "").replace(/\//g, "、") };
   if (source === "autocomplete") return { source, sourceLabel: "网页自己声明的字段类型", text: `autocomplete="${text}"` };
   if (source === "type") return { source, sourceLabel: "网页自己声明的输入类型", text: `type="${text}"` };
+  if (source === "siteMemory") {
+    return { source, sourceLabel: "站点设定（你人工指定过）", text };
+  }
   const sourceLabel = SIGNAL_LABELS[source];
   if (!sourceLabel) return null;
   return { source, sourceLabel, text };
@@ -92,11 +95,16 @@ export function explainMatchResult(match: MatchResult): MatchExplanation {
   if (!matched) {
     headline = plainReasons[0] ?? "这个字段没有对上资料库里的任何一项，留给你人工处理。";
   } else if (level === "HIGH") {
-    headline = `匹配到「${fieldFullLabel(match.fieldId)}」——${signals[0] ? `${signals[0].sourceLabel}写着「${signals[0].text}」` : "多个信号一致"}。`;
+    const why = signals[0]
+      ? signals[0].source === "siteMemory"
+        ? `网页上这栏写着「${signals[0].text}」，它的归属是你在这一站人工指定过的`
+        : `${signals[0].sourceLabel}写着「${signals[0].text}」`
+      : "多个信号一致";
+    headline = `匹配到「${fieldFullLabel(match.fieldId)}」——${why}。`;
   } else if (level === "MEDIUM") {
     headline = `大概率是「${fieldFullLabel(match.fieldId)}」（把握中等），请你过一眼。`;
   } else {
-    headline = `可能是「${fieldFullLabel(match.fieldId)}」，但把握不足，建议核对后再填。`;
+    headline = `可能是「${fieldFullLabel(match.fieldId)}」，但把握不足，扩展没有自动填它。`;
   }
 
   const explanation: MatchExplanation = {
@@ -125,9 +133,13 @@ export function explainCandidate(c: CandidateField): MatchExplanation {
   const isRedline =
     c.status === "manual" || c.status === "excluded" || c.status === "unsupported" || c.risk === "MANUAL_ONLY";
   if (isRedline && c.riskReason) base.blockedReason = c.riskReason;
+  else if (c.status === "low-confidence") base.blockedReason = c.riskReason;
   else if (c.status === "failed" && c.fillDetail) base.blockedReason = c.fillDetail;
   else if (c.status === "empty") base.blockedReason = "资料库里没有这一项的内容，先去「资料」页补上。";
-  else if (c.status === "ignored") base.blockedReason = "你刚才选择了跳过这一项。";
+  else if (c.status === "ignored")
+    base.blockedReason = c.siteRule
+      ? `这一栏按你在 ${c.siteRule.host} 上定过的设定跳过，扩展没有写它。`
+      : "你刚才选择了跳过这一项。";
   return base;
 }
 

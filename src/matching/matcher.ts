@@ -187,7 +187,7 @@ const OTHER_PERSON_FIELD_IDS = new Set(["basic.emergencyContactName", "basic.eme
  * 带限定词的字段名后缀（真机字节跳动官网文案：「学历类型」「紧急联系人与自己的关系」）。
  * 这类标签问的是「XX 的类型/关系」，不是 XX 本身；资料库没有对应槽位时留人工。
  */
-const QUALIFIED_SUFFIX_PATTERN = /(类型|类别|种类|关系)$/;
+const QUALIFIED_SUFFIX_PATTERN = /(类型|类别|种类|关系|所属机构)$/;
 
 
 /**

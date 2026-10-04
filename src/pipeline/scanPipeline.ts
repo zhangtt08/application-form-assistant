@@ -8,6 +8,8 @@ import { isCanonicalFieldId, getCanonicalFieldDef } from "../rules/canonicalFiel
 import { LogEvent, logger } from "../utils/logger";
 import { classifyQuestion } from "../answering/questionClassifier";
 import { classifyApplicationContext } from "../context/applicationContext";
+import { fieldFullLabel } from "../core/fieldLabels";
+import { matchSiteRule, type SiteFieldRule } from "../site/siteMemory";
 
 export interface ScanPipelineOptions {
   /** Stage 6.5：Effective Profile Pack（variantType/experienceOrder/fieldContents 接线 resolver） */
@@ -16,6 +18,12 @@ export interface ScanPipelineOptions {
   entryIndex?: number;
   /** 当前岗位方向（Active Job → Profile Router）：决定经历表达变体 */
   profileType?: import("../job/profileTypes").ProfileType;
+  /**
+   * 这一站（同一 host）的站点记忆规则，已由调用方按 host 过滤好。
+   * 只读：影响「这一栏算哪个字段 / 要不要跳过」的判断，不产生任何 DOM 写入。
+   * 空数组 = 没有记忆，行为与之前完全一致。
+   */
+  siteRules?: import("../site/siteMemory").SiteFieldRule[];
 }
 
 /**
@@ -85,10 +93,11 @@ export function optionSetCoversValue(options: string[], value: string): boolean 
  * 状态推导（纯函数；扫描与「切换填写版本重解析」共用，保证两条路径行为一致）：
  * - unsupported：radio/checkbox/contenteditable 无界
  * - manual：MANUAL_ONLY / 控件收不下该值（禁止自动改写）
- * - unknown / low-confidence：未识别或置信度不足
+ * - unknown：未识别
  * - empty：识别成功但无可用内容
- * - need-confirm：REVIEW / MEDIUM 置信度 / 字数超限（禁止自动截断）
- * - ready：SAFE + HIGH + 有值
+ * - low-confidence：匹配把握不足 → **不静默填写**，等人工确认
+ * - need-confirm：AI 生成的开放题回答（要人过一眼内容）
+ * - ready：SAFE + 高/中置信 + 有值（中置信按用户既有偏好仍可直接填，界面上有重点核对提示）
  */
 export function deriveStatus(
   raw: RawField,
@@ -113,12 +122,24 @@ export function deriveStatus(
   if (risk.risk === "MANUAL_ONLY") {
     return { status: "manual" };
   }
-  if (!idValid || confidenceLevel(match.confidence) === "LOW") {
-    // 已匹配到 canonical field 的内容按用户偏好直接填写；只有完全未知字段继续拦截。
-    if (match.fieldId === "unknown") return { status: "unknown" };
+  if (!idValid || match.fieldId === "unknown") {
+    return { status: "unknown" };
   }
   if (!value) {
     return { status: "empty" }; // 识别成功但 Profile 无可用内容
+  }
+  /**
+   * 低置信 = 「像这一栏，但我不敢说」。以前这种会跟着自动填，
+   * 用户看到的只是事后一个 62% —— 填错了要自己发现，成本全在人这边。
+   * 现在它不进自动填写：卡片上写清把握不足与命中的依据，
+   * 由人核对后点「确认要填这一项」显式放行（确认之后走 need-confirm，与其余字段同一道门禁）。
+   * 例外：站点记忆里有人已经判过一次（confidence 被抬到人工档）→ 不再重复追问。
+   */
+  if (confidenceLevel(match.confidence) === "LOW") {
+    return {
+      status: "low-confidence",
+      riskReason: `只有 ${Math.round(match.confidence * 100)}% 的把握判断这一栏是「${fieldFullLabel(match.fieldId)}」，所以没有自动填写；核对无误后点卡片上的「确认要填这一项」`,
+    };
   }
   // 字数超限：既不自动截断，也不自动写入超长值（站点会判非法），交回人工缩减。
   const maxLen = raw.context.maxLength;
@@ -148,9 +169,34 @@ export function deriveStatus(
   if (risk.risk === "SAFE" && confidenceLevel(match.confidence) === "HIGH") {
     return { status: "ready" };
   }
-  // 用户已明确选择自动填写已匹配内容：REVIEW / MEDIUM / LOW 只影响徽章与日志，
-  // 不再阻断写入；unknown 字段在上面已被拦截。
+  // 用户已明确选择：REVIEW 风险与中置信仍可直接填（界面上有「重点核对」提示），
+  // 低置信在上面已经被拦下，走不到这里。
   return { status: "ready" };
+}
+
+/**
+ * 站点记忆里的「人工改挂」套用到匹配结果上。
+ *
+ * 为什么敢把置信度抬到人工档：这一栏的字段归属不是软件猜的，是人在这条 host 上
+ * 亲手指过的（同一 host、同一控件文字、同一板块才命中）。但仍然只改「算哪个字段」，
+ * 不改风险判定 —— assessRisk 之后照跑，所以人工把某栏改挂到身份证号/薪资这类字段上
+ * 仍会被 MANUAL_ONLY 拦下（红线在站点记忆之上）。
+ */
+export function applySiteMapping(
+  match: MatchResult,
+  rule: SiteFieldRule,
+): MatchResult {
+  if (!rule.fieldId || rule.kind !== "map") return match;
+  const from = match.fieldId;
+  return {
+    ...match,
+    fieldId: rule.fieldId,
+    confidence: Math.max(match.confidence, 0.95),
+    evidence: [`siteMemory=${rule.siteLabel || rule.matchKey}`, ...match.evidence].slice(0, 3),
+    // 记下来原识别结果，界面才能说清「本来识别成了什么」
+    runnerUpFieldId: from !== rule.fieldId ? from : match.runnerUpFieldId,
+    runnerUpConfidence: from !== rule.fieldId ? match.confidence : match.runnerUpConfidence,
+  };
 }
 
 /**
@@ -168,6 +214,7 @@ export function runScanPipeline(
   // 网申表单的「实习经历1/2/3」「项目1/2」是重复块，字段顺序与经历顺序一致；
   // 不做分配会让所有重复块都填第一条数据（错位）。每 id 独立计数，字段集合不齐时依然对齐。
   const entryCounters = new Map<string, number>();
+  const siteRules = options.siteRules ?? [];
   for (const raw of rawFields) {
     // Application Context Gate 前置短路（issue-004）：非申请控件必须在多条目轮转计数之前剔除，
     // 否则登录面板里的「手机号」会挤掉 internship/basic 的真实序号，导致整张表单错位。
@@ -188,6 +235,24 @@ export function runScanPipeline(
         `${raw.context.labelText || raw.context.name || raw.context.placeholder} → 非申请表控件 (${applicationContext.zone})`,
         { zone: applicationContext.zone, score: applicationContext.score },
       );
+      continue;
+    }
+
+    // 站点记忆（人工在这一站判过一次）——同样必须在轮转计数之前短路：
+    // 「这一站别填」的一栏不该把 internship.2 的序号顶成 internship.3。
+    const siteRule = matchSiteRule(siteRules, raw.context);
+    if (siteRule && siteRule.kind === "block") {
+      candidates.push({
+        raw,
+        match: matchField(raw),
+        risk: "SAFE",
+        riskReason: `按你在 ${siteRule.host} 的设定，这一栏以后都不自动填`,
+        value: undefined,
+        status: "ignored",
+        applicationContext,
+        siteRule: { ruleId: siteRule.id, host: siteRule.host, kind: "block" },
+      });
+      logger.event(LogEvent.FIELD_SKIPPED, `${raw.context.labelText || raw.context.name} → 站点设定：这一站不填`);
       continue;
     }
 
@@ -230,7 +295,15 @@ export function runScanPipeline(
       continue;
     }
 
-    const match = matchField(raw);
+    let match = matchField(raw);
+    // 站点记忆改挂前的自动识别结果，界面用它说明「本来识别成了什么」
+    const siteOverrodeFrom =
+      siteRule && siteRule.kind === "map" && siteRule.fieldId && siteRule.fieldId !== match.fieldId
+        ? match.fieldId
+        : undefined;
+    if (siteRule && siteRule.kind === "map") {
+      match = applySiteMapping(match, siteRule);
+    }
 
     // 风险评估：文本关键词优先，其次 canonical id（即使 unknown 也可能命中敏感词）
     const risk = assessRisk(match.fieldId, {
@@ -304,6 +377,10 @@ export function runScanPipeline(
       entryIndex,
       openAnswer,
       applicationContext,
+      siteRule:
+        siteRule && siteRule.kind === "map"
+          ? { ruleId: siteRule.id, host: siteRule.host, kind: "map", overriddenFieldId: siteOverrodeFrom }
+          : undefined,
     });
 
     // ContentResolver 日志（spec Stage 2 第二十二章）：内容来源可追溯
@@ -315,10 +392,10 @@ export function runScanPipeline(
       );
     }
 
-    if (idValid && status !== "unknown" && status !== "empty") {
+    if (idValid && status !== "unknown" && status !== "empty" && status !== "low-confidence") {
       logger.event(
         LogEvent.FIELD_MATCHED,
-        `${raw.context.labelText || raw.context.name} → ${match.fieldId} (${match.confidence}) [${risk.risk}]`,
+        `${raw.context.labelText || raw.context.name} → ${match.fieldId} (${match.confidence}) [${risk.risk}]${siteRule ? " 站点设定" : ""}`,
         { evidence: match.evidence },
       );
     } else {

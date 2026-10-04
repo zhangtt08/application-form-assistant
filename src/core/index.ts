@@ -46,12 +46,32 @@ export { classifyQuestion, QUESTION_INTENT_CONFIG } from "../answering/questionC
 export { chooseVariant, resolveValue, type ResolveOptions } from "../profile/profileResolver";
 export {
   adaptValueToNumberControl,
+  applySiteMapping,
   deriveStatus,
   numberValueFitsStep,
   optionSetCoversValue,
   runScanPipeline,
   type ScanPipelineOptions,
 } from "../pipeline/scanPipeline";
+
+/* ---------- 站点记忆（只记站点文字与人工判断，不记资料值） ---------- */
+export {
+  MAX_SITE_RULES,
+  buildRule,
+  describeRule,
+  emptySiteMemory,
+  fieldMatchCandidates,
+  hostFromUrl,
+  makeRuleId,
+  matchSiteRule,
+  removeRule,
+  rulesForHost,
+  sanitizeRule,
+  upsertRule,
+  type SiteFieldRule,
+  type SiteMemory,
+  type SiteRuleKind,
+} from "../site/siteMemory";
 
 /* ---------- 填写计划（写入门禁的唯一入口） ---------- */
 export {

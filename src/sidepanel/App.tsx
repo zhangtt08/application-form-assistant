@@ -17,14 +17,19 @@ import { useProfile } from "./hooks/useProfile";
 import {
   assessRisk,
   buildFillPlan,
+  describeRule,
   deriveStatus,
   fieldFullLabel,
+  hostFromUrl,
   isCanonicalFieldId,
+  matchField,
   resolveValue,
+  rulesForHost,
   runScanPipeline,
   summarizeFillOutcome,
   type FillSummary,
   type RiskAssessment,
+  type SiteMemory,
 } from "../core";
 import {
   routeJob,
@@ -83,6 +88,14 @@ import {
 } from "../answering/answerStore";
 import { validateAnswer } from "../answering/answerValidator";
 import { loadApplyPrefs, saveApplyPrefs, DEFAULT_PREFS, type ApplyPrefs } from "./prefs";
+import {
+  addSiteRule,
+  emptySiteMemory,
+  loadSiteMemory,
+  removeSiteRule,
+  subscribeSiteMemoryChanges,
+} from "../site/siteMemory";
+import { formatBytes, readStorageUsage, type StorageUsage } from "../utils/storageUsage";
 
 /**
  * 侧边栏主壳。
@@ -152,6 +165,9 @@ export default function App() {
   const [tab, setTab] = useState<MainTab>("apply");
   const [detailJobId, setDetailJobId] = useState<string | null>(null);
   const [prefs, setPrefs] = useState<ApplyPrefs>(DEFAULT_PREFS);
+  /** 站点记忆：人在某个招聘站上做过的字段归属判断 / 「这一站别填」，本机保存 */
+  const [siteMemory, setSiteMemory] = useState<SiteMemory>(emptySiteMemory());
+  const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [steps, setSteps] = useState<Step[]>([]);
@@ -203,6 +219,18 @@ export default function App() {
     void loadApplyPrefs().then(setPrefs);
   }, []);
 
+  // 站点记忆：开面板读一次，之后跟着 storage.onChanged 走（设置页删了，投递页要立刻失效）
+  useEffect(() => {
+    void loadSiteMemory().then(setSiteMemory);
+    return subscribeSiteMemoryChanges(setSiteMemory);
+  }, []);
+
+  // 存储用量只在打开设置页时读（不常驻轮询，它要整份读盘）
+  useEffect(() => {
+    if (tab !== "settings") return;
+    void readStorageUsage().then(setStorageUsage);
+  }, [tab]);
+
   const updatePrefs = useCallback((patch: Partial<ApplyPrefs>) => {
     setPrefs((prev) => {
       const next = { ...prev, ...patch };
@@ -246,8 +274,17 @@ export default function App() {
 
   /* ---------------- 统计 ---------------- */
 
+  /** 当前页面属于哪个招聘站（站点记忆的键）；读不到 URL 就没有站点设定可用 */
+  const siteHost = useMemo(() => hostFromUrl(url), [url]);
+
   const reviewTargets = useMemo(
-    () => candidates.filter((c) => c.status === "need-confirm" && !!c.value && c.risk !== "MANUAL_ONLY"),
+    () =>
+      candidates.filter(
+        (c) =>
+          (c.status === "need-confirm" || c.status === "low-confidence") &&
+          !!c.value &&
+          c.risk !== "MANUAL_ONLY",
+      ),
     [candidates],
   );
   const filledList = useMemo(() => candidates.filter((c) => c.status === "filled"), [candidates]);
@@ -256,11 +293,10 @@ export default function App() {
     () => candidates.filter((c) => c.status === "manual" || c.status === "unsupported"),
     [candidates],
   );
+  /** 把握不足：资料有内容，但识别证据不够，扩展没有写它 —— 等的是人点一次头，不是等资料。
+   *  它和 AI 回答一起算在 `reviewTargets`（待你确认）里，界面上不再是「静默填了 62%」。 */
   const noContentList = useMemo(
-    () =>
-      candidates.filter(
-        (c) => c.status === "empty" || c.status === "unknown" || c.status === "low-confidence",
-      ),
+    () => candidates.filter((c) => c.status === "empty" || c.status === "unknown"),
     [candidates],
   );
   const confirmable = useMemo(() => candidates.filter(isConfirmedFillable), [candidates]);
@@ -706,6 +742,11 @@ export default function App() {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id) throw new Error("找不到活动标签页");
       setUrl(ensure.url ?? "");
+      // 站点记忆按**这一次实际连上的那个 host**取规则：不能用上一次的 url state
+      // （同一面板里从 A 站切到 B 站时它是旧的，套错站的规则就是把上家公司的判断
+      //  塞进这一家的表单 —— 那正是「填错」而不是「没填」）
+      const hostNow = hostFromUrl(ensure.url);
+      const rulesNow = rulesForHost(siteMemory, hostNow);
       markStep("page", "done", hostOf(ensure.url) ?? "已连接");
 
       /* ② 岗位与方向 */
@@ -808,7 +849,7 @@ export default function App() {
 
       /* ④ 匹配资料 */
       markStep("match", "running");
-      const scanned = runScanPipeline(res.fields, profNow, { profileType: effectiveNow }).map((c) => {
+      const scanned = runScanPipeline(res.fields, profNow, { profileType: effectiveNow, siteRules: rulesNow }).map((c) => {
         if (!c.openAnswer || !job) return c;
         const hit = restoredSessionAnswers.find((a) => a.question === c.openAnswer!.question && a.answer);
         if (!hit) return c;
@@ -845,14 +886,18 @@ export default function App() {
         };
       });
 
-      // 用户已选择自动填写所有有内容的匹配字段；MANUAL_ONLY / unknown 仍不进入计划。
+      // 用户已选择自动填写所有有内容的匹配字段；MANUAL_ONLY / unknown 仍不进入计划，
+      // 低置信（low-confidence）现在也不静默填 —— 等人在卡片上点一次「确认要填这一项」。
       const withConfirm = scanned.map((c) => (isSafeFillable(c) ? { ...c, confirmed: true } : c));
       setCandidates(withConfirm);
       const autoTargets = withConfirm.filter(isSafeFillable);
+      const awaitingNow = withConfirm.filter((c) => c.status === "low-confidence").length;
+      const siteSkipped = withConfirm.filter((c) => !!c.siteRule).length;
       markStep(
         "match",
         "done",
-        `已识别 ${res.fields.length} 个字段，其中 ${autoTargets.length} 项可直接填写`,
+        `已识别 ${res.fields.length} 个字段，其中 ${autoTargets.length} 项可直接填写` +
+          (awaitingNow ? `，${awaitingNow} 项要你核对` : ""),
       );
       await trace("PREVIEW_READY", "success", `${res.fields.length} fields profileType=${effectiveNow}`, {
         profileType: effectiveNow,
@@ -860,17 +905,27 @@ export default function App() {
 
       if (autoTargets.length > 0 && prefs.autoFill) {
         await applyFill(autoTargets, withConfirm);
+        if (awaitingNow > 0) {
+          setNotice(
+            `另有 ${awaitingNow} 项识别把握不足，扩展没有替你填 —— 在清单里核对后点「核对过了，确认要填这一项」。`,
+          );
+        }
       } else if (autoTargets.length > 0) {
         // 用户关掉了自动填写：先把清单摊开，勾选后由「确认并填写」写入
         setPreviewRevealed(true);
-        setNotice(`已识别 ${res.fields.length} 个字段，其中 ${autoTargets.length} 项可填写。勾选后点「确认并填写」。`);
+        setNotice(
+          `已识别 ${res.fields.length} 个字段，其中 ${autoTargets.length} 项可填写。勾选后点「确认并填写」。` +
+            (awaitingNow ? ` 另有 ${awaitingNow} 项把握不足，需要你核对。` : ""),
+        );
         setPhase("ready");
       } else {
-        setPreviewRevealed(false);
+        setPreviewRevealed(awaitingNow > 0 || siteSkipped > 0);
         setNotice(
           res.fields.length === 0
             ? "这个页面没有需要填写的表单字段。岗位已经记录，进入网申页后再点「开始识别」。"
-            : `已识别 ${res.fields.length} 个字段，暂无匹配到资料的可填写项。`,
+            : awaitingNow > 0
+              ? `已识别 ${res.fields.length} 个字段，${awaitingNow} 项把握不足需要你核对后再填 —— 其余没有匹配到资料的可填写项，扩展不猜。`
+              : `已识别 ${res.fields.length} 个字段，暂无匹配到资料的可填写项。`,
         );
         setPhase("ready");
       }
@@ -878,7 +933,7 @@ export default function App() {
       setError(`识别失败：${err instanceof Error ? err.message : String(err)}（请刷新页面后重试）`);
       setPhase("idle");
     }
-  }, [activeJob, applyFill, markStep, prefs.autoCaptureJob, profile, profileOverride, switchLibrary, tryCaptureJob]);
+  }, [activeJob, applyFill, markStep, prefs.autoCaptureJob, prefs.autoFill, profile, profileOverride, siteMemory, switchLibrary, tryCaptureJob]);
 
   /* ---------------- 主流程：填写剩余已确认项 ---------------- */
 
@@ -1018,46 +1073,143 @@ export default function App() {
     );
 
   /**
-   * 把这一项改挂到次选资料字段上（低置信字段的人工纠正出路）。
-   * 重挂后**重新走一遍完整判定**（riskRules → resolver → deriveStatus），
-   * 而不是只改显示：改判的结果必须和扫描时同一口径，否则会出现
-   * 「界面上说是 SAFE，写进去却绕过了门禁」。确认状态一律作废。
+   * 重新判定一个字段（人工改挂 / 撤销站点设定之后用）。
+   * 走的是和扫描完全一样的口径：assessRisk → resolveValue → deriveStatus，
+   * 所以人工改挂之后仍然可能被红线或控件格式拦下 —— 不会出现
+   * 「界面上说是 SAFE，写进去却绕过了门禁」。多条目序号（第几段经历）保留，
+   * 否则改一栏会把「实习经历 2」的内容填成「实习经历 1」。
+   */
+  const rejudgeCandidate = useCallback(
+    (c: CandidateField, fieldId: string): CandidateField => {
+      if (!profile) return c;
+      const match: CandidateField["match"] = { ...c.match, fieldId };
+      const risk = assessRisk(fieldId, {
+        labelText: c.raw.context.labelText,
+        ariaLabel: c.raw.context.ariaLabel,
+        placeholder: c.raw.context.placeholder,
+        title: c.raw.context.title,
+        fieldsetLabel: c.raw.context.fieldsetLabel,
+        sectionTitle: c.raw.context.sectionTitle,
+      });
+      const value =
+        risk.risk === "MANUAL_ONLY"
+          ? undefined
+          : resolveValue(fieldId, profile, {
+              entryIndex: c.entryIndex ?? c.value?.entryIndex,
+              maxLength: c.raw.context.maxLength,
+              profileType: effectiveType,
+            });
+      const derived = deriveStatus(c.raw, match, risk, isCanonicalFieldId(fieldId), value);
+      return {
+        ...c,
+        match,
+        risk: risk.risk,
+        riskReason: derived.riskReason ?? risk.reason,
+        value: value ?? undefined,
+        status: derived.status,
+        editedValue: undefined,
+        confirmed: false,
+      };
+    },
+    [effectiveType, profile],
+  );
+
+  /**
+   * 把这一项改挂到次选资料字段上（低置信字段的人工纠正出路），
+   * 并在知道 host 时把它**沉淀成站点设定** —— 同一家招聘站下次不用再改一遍。
+   * 记忆只含 host + 站点自己给控件写的文字 + canonical 字段 id，不含任何资料值（见 siteMemory.ts）。
    */
   const switchMatchedField = (reference: string, fieldId: string) => {
-    if (!profile) return;
+    if (!profile || !isCanonicalFieldId(fieldId)) return;
+    const target = candidates.find((c) => c.raw.reference === reference);
     setCandidates((prev) =>
       prev.map((c) => {
-        if (c.raw.reference !== reference || !isCanonicalFieldId(fieldId)) return c;
-        const match = { ...c.match, fieldId };
-        const risk = assessRisk(fieldId, {
-          labelText: c.raw.context.labelText,
-          ariaLabel: c.raw.context.ariaLabel,
-          placeholder: c.raw.context.placeholder,
-          title: c.raw.context.title,
-          fieldsetLabel: c.raw.context.fieldsetLabel,
-          sectionTitle: c.raw.context.sectionTitle,
-        });
-        const value =
-          risk.risk === "MANUAL_ONLY"
-            ? undefined
-            : resolveValue(fieldId, profile, {
-                entryIndex: c.entryIndex,
-                maxLength: c.raw.context.maxLength,
-                profileType: effectiveType,
-              });
-        const derived = deriveStatus(c.raw, match, risk, true, value);
-        return {
-          ...c,
-          match,
-          risk: risk.risk,
-          riskReason: derived.riskReason ?? risk.reason,
-          value: value ?? undefined,
-          status: derived.status,
-          editedValue: undefined,
-          confirmed: false,
-        };
+        if (c.raw.reference !== reference) return c;
+        const next = rejudgeCandidate(c, fieldId);
+        return { ...next, siteRule: siteHost ? { ruleId: `pending_${reference}`, host: siteHost, kind: "map" as const } : undefined };
       }),
     );
+    if (siteHost && target) {
+      void addSiteRule({ host: siteHost, ctx: target.raw.context, kind: "map", fieldId }).then(async ({ rule }) => {
+        const fresh = await loadSiteMemory();
+        setSiteMemory(fresh);
+        if (rule) {
+          // 把占位 ruleId 换成真实那条，撤销按钮才找得到它
+          setCandidates((prev) =>
+            prev.map((c) =>
+              c.raw.reference === reference && c.siteRule?.kind === "map"
+                ? { ...c, siteRule: { ...c.siteRule, ruleId: rule.id, host: rule.host, overriddenFieldId: matchField(c.raw).fieldId } }
+                : c,
+            ),
+          );
+          setNotice(`已记住：${rule.host} 上的「${rule.siteLabel || rule.matchKey}」按${fieldFullLabel(fieldId)}填。可在「设置 → 站点设定」里撤销。`);
+        } else {
+          setNotice("这一栏的归属已经改了，但这一站没能记住（网页没给出可识别的栏名）。下次仍需在清单里确认。");
+        }
+      });
+    }
+  };
+
+  /**
+   * 低置信字段的人工放行。这里只翻「要不要填」的决定，
+   * 写入仍然经过 buildFillPlan（confirmed + 非 MANUAL_ONLY + 语境合格）—— 放行不等于绕行。
+   */
+  const confirmLowConfidence = (reference: string) => {
+    setCandidates((prev) =>
+      prev.map((c) =>
+        c.raw.reference === reference && c.status === "low-confidence"
+          ? { ...c, status: "need-confirm", confirmed: true }
+          : c,
+      ),
+    );
+    setPreviewRevealed(true);
+  };
+
+  /** 「这一站以后都别填这一项」：写进站点记忆，并把当前这张卡立刻切成跳过 */
+  const blockOnSite = async (reference: string) => {
+    const target = candidates.find((c) => c.raw.reference === reference);
+    if (!target || !siteHost) return;
+    const { memory, rule } = await addSiteRule({ host: siteHost, ctx: target.raw.context, kind: "block" });
+    setSiteMemory(memory);
+    if (!rule) {
+      setNotice("这一栏没能在这一站上被唯一识别（网页没给出可记的栏名），所以只跳过了本次。");
+      ignore(reference);
+      return;
+    }
+    setCandidates((prev) =>
+      prev.map((c) =>
+        c.raw.reference === reference
+          ? {
+              ...c,
+              preIgnoreStatus: c.status,
+              status: "ignored",
+              confirmed: false,
+              value: undefined,
+              riskReason: `按你在 ${rule.host} 的设定，这一栏以后都不自动填`,
+              siteRule: { ruleId: rule.id, host: rule.host, kind: "block" },
+            }
+          : c,
+      ),
+    );
+    setNotice(`已记住：${rule.host} 上的「${rule.siteLabel || rule.matchKey}」以后都不自动填。可在「设置 → 站点设定」里撤销。`);
+  };
+
+  /** 撤销一条站点设定，并把受影响的那几张卡重新判定回自动识别的结果 */
+  const undoSiteRule = async (ruleId: string) => {
+    const removed = siteMemory.rules.find((r) => r.id === ruleId);
+    const next = await removeSiteRule(ruleId);
+    setSiteMemory(next);
+    if (!removed) return;
+    setCandidates((prev) =>
+      prev.map((c) => {
+        if (c.siteRule?.ruleId !== ruleId) return c;
+        const cleared: CandidateField = { ...c, siteRule: undefined };
+        const autoId = matchField(c.raw).fieldId;
+        const rejudged = rejudgeCandidate(cleared, autoId);
+        return { ...rejudged, siteRule: undefined, preIgnoreStatus: undefined };
+      }),
+    );
+    setNotice(`已取消这条站点设定。${removed.kind === "map" ? "这一栏回到自动识别的结果。" : "这一栏下次识别可以正常填写。"}`);
   };
 
   const locate = async (reference: string) => {
@@ -1239,7 +1391,7 @@ export default function App() {
                   </div>
                   <div className="summary-cell">
                     <div className="summary-num num-review">{anyPending}</div>
-                    <div className="summary-label">待补资料</div>
+                    <div className="summary-label">待你确认</div>
                   </div>
                   <div className="summary-cell">
                     <div className="summary-num num-manual">{manualList.length + noContentList.length}</div>
@@ -1271,11 +1423,17 @@ export default function App() {
                     </button>
                   ) : (
                     <>
-                      {anyPending > 0 && (
-                        <button type="button" className="btn-sm" onClick={confirmAllConfirmable}>
-                          全部确认（{anyPending}）
-                        </button>
-                      )}
+                      {(() => {
+                        /* 批量确认只覆盖「证据够」的那批：低置信项必须一项一点头，
+                           不然这个按钮就把本轮刚装的「低置信不静默填」又绕回去了。 */
+                        const bulk = candidates.filter((c) => isConfirmable(c) && !c.confirmed).length;
+                        if (bulk === 0) return null;
+                        return (
+                          <button type="button" className="btn-sm" onClick={confirmAllConfirmable}>
+                            全部确认可直接填的（{bulk}）
+                          </button>
+                        );
+                      })()}
                       {(phase === "done" || candidates.length === 0) && pendingToFill.length === 0 ? (
                         /* 填完之后的主操作必须是「下一步」，不是一个灰掉的「没有可填写的项」 */
                         <button type="button" className="primary" onClick={() => setTab("jobs")}>
@@ -1336,13 +1494,25 @@ export default function App() {
                 onIgnore={ignore}
                 onUnignore={unignore}
                 onSwitchField={switchMatchedField}
+                onConfirmLowConfidence={confirmLowConfidence}
+                onBlockOnSite={(r) => void blockOnSite(r)}
+                onUndoSiteRule={(id) => void undoSiteRule(id)}
+                siteHost={siteHost ?? undefined}
                 onLocate={(r) => void locate(r)}
                 onGenerateAnswer={(r) => void handleGenerateAnswer(r)}
                 onRevalidateAnswer={(r) => void handleRevalidateAnswer(r)}
                 />
               )}
 
-              {phase === "done" && <FillReceipt candidates={candidates} onLocate={(r) => void locate(r)} onUnignore={unignore} />}
+              {phase === "done" && (
+                <FillReceipt
+                  candidates={candidates}
+                  onLocate={(r) => void locate(r)}
+                  onUnignore={unignore}
+                  onConfirmLowConfidence={confirmLowConfidence}
+                  onUndoSiteRule={(id) => void undoSiteRule(id)}
+                />
+              )}
             </>
           )}
         </>
@@ -1395,7 +1565,8 @@ export default function App() {
       <section className="card">
         <h3 className="card-title">填写行为</h3>
         <p className="hint">
-          识别完成后，凡是资料库里已有内容的字段都会直接写入页面，<strong>不需要逐项确认</strong>；
+          识别完成后，资料库里已有内容、而且识别证据足够的字段会直接写入页面，<strong>不需要逐项确认</strong>；
+          把握不足（低置信）的那几项<strong>不会静默填写</strong>，会在清单里列出依据等你点头；
           资料库里没有的字段保持空着由你补。承诺 / 声明 / 签名 / 是否调剂这类保证性控件不会代填，
           插件也永远不点提交。误填时可用「撤销本次填写」恢复。
         </p>
@@ -1415,6 +1586,54 @@ export default function App() {
           />
           <span>识别时自动读取当前页面的岗位 JD</span>
         </label>
+      </section>
+
+      <section className="card">
+        <h3 className="card-title">站点设定（{siteMemory.rules.length} 条）</h3>
+        <p className="hint">
+          你在某个招聘站上点过的「这一栏其实是……」和「这一站以后都别填这一项」会记在这里，下次识别直接生效。
+          这里只存<strong>站点自己写的栏名</strong>和你的判断，不存你的资料内容，也不存任何登录凭据；
+          换一台浏览器或清掉本机数据就会重新开始。
+        </p>
+        {siteMemory.rules.length === 0 ? (
+          <p className="muted small">还没有站点设定。在识别清单里点「这一站以后都别填」或「改用这一项」就会新增一条。</p>
+        ) : (
+          <ul className="site-rule-list">
+            {siteMemory.rules.map((r) => (
+              <li key={r.id} className="site-rule-row" data-kind={r.kind}>
+                <span className="site-rule-text">{describeRule(r, fieldFullLabel)}</span>
+                <button type="button" className="link-btn" onClick={() => void undoSiteRule(r.id)}>
+                  删除
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="card">
+        <h3 className="card-title">本机存储</h3>
+        {!storageUsage || !storageUsage.available ? (
+          <p className="muted small">读不到存储用量（这里显示的是真实读数，不拿 0 冒充「没占用」）。</p>
+        ) : (
+          <>
+            <p className="hint" data-storage-ratio={storageUsage.ratio.toFixed(3)}>
+              已用 {formatBytes(storageUsage.totalBytes)} / {formatBytes(storageUsage.quotaBytes)}（
+              {(storageUsage.ratio * 100).toFixed(1)}%）。全部只存在这台浏览器的本地，扩展不上传任何东西。
+              {storageUsage.warn && (
+                <strong className="meta-warn"> 空间接近上限：保存可能失败，请清理岗位记录或在「资料」页导出后留底。</strong>
+              )}
+            </p>
+            <ul className="storage-list">
+              {storageUsage.keys.slice(0, 6).map((k) => (
+                <li key={k.key}>
+                  <span className="storage-key">{k.key}</span>
+                  <span className="storage-bytes">{formatBytes(k.bytes)}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </section>
 
       <section className="card">

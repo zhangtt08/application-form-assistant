@@ -335,6 +335,8 @@ function candidateRows(candidates, { limit = 200, includeValues = false } = {}) 
       signals: explain.signals.map((s) => `${s.sourceLabel}：${s.text}`),
       alternative: explain.alternative ? { field_id: c.match.runnerUpFieldId, label: explain.alternative.fieldLabel, confidence: explain.alternative.percent / 100 } : undefined,
       blocked_reason: explain.blockedReason,
+      /** 这条结论有多少是「站点记忆」（人在这一站上点过头的）而不是这一轮算出来的 */
+      site_rule: c.siteRule ? { kind: c.siteRule.kind, host: c.siteRule.host } : undefined,
       fillable: c.status === "ready" || c.status === "need-confirm",
       open_question: c.openAnswer ? { intent: c.openAnswer.intent, question: c.openAnswer.question } : undefined,
       value: includeValues ? masked.masked : undefined,
@@ -353,6 +355,10 @@ function redlineTally(candidates) {
     unmatched: by((c) => c.status === "unknown"),
     no_profile_value: by((c) => c.status === "empty"),
     unsupported_control: by((c) => c.status === "unsupported"),
+    /** 低置信：有内容但证据不足，扩展没有静默填写 —— 必须人来点一下 */
+    awaiting_human: by((c) => c.status === "low-confidence"),
+    /** 命中站点记忆设定（这一站别填 / 人工改挂）的条数 */
+    site_rule_applied: by((c) => !!c.siteRule),
     low_confidence: by((c) => core.confidenceLevel(c.match.confidence) === "LOW"),
   };
 }
@@ -631,7 +637,8 @@ export const tools = [
     name: "afa.plan_fill",
     description:
       "对给定表单生成**填写计划 JSON**（不落 DOM、不写入、不提交）：哪些字段会写什么（默认脱敏）、哪些被红线拦下及原因。" +
-      "与扩展点「确认并填写」时走的是同一个 buildFillPlan 门禁，所以计划里绝不含 MANUAL_ONLY、未识别、语境排除或无内容的字段。",
+      "与扩展点「确认并填写」时走的是同一个 buildFillPlan 门禁，所以计划里绝不含 MANUAL_ONLY、未识别、语境排除、无内容或识别把握不足（低置信）的字段 —— " +
+      "低置信要人在界面上核对放行之后才会进计划。",
     input_schema: {
       type: "object",
       properties: {

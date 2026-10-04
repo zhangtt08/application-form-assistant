@@ -321,7 +321,7 @@ export const FIELD_ALIASES: Record<string, string[]> = {
     "tools", "software", "toolkit", "familiar tools", "software skills",
   ],
   "skills.languages": [
-    "语言能力", "语言", "外语水平", "英语水平", "语言技能", "普通话", "外语语种",
+    "语言能力", "语言", "外语水平", "英语水平", "语言技能", "普通话", "外语语种", "外语能力",
     "languages", "language skills", "language",
   ],
   "skills.certificates": [

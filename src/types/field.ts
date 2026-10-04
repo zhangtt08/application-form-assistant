@@ -183,6 +183,18 @@ export interface CandidateField {
   fillDetail?: string;
   /** Application Context Gate 判定（issue-004）：为什么算候选 / 为什么被排除 */
   applicationContext?: ApplicationContextResult;
+  /**
+   * 这一项本次是按站点记忆的哪条设定处理的（站点改版前的人工判断）。
+   * 只带规则 id / 主机名 / 站点自己给的文字 —— 绝不带资料值。
+   * 界面上靠它把「这是软件猜的」和「这是你上次在这一站定的」区分开，并给出撤销入口。
+   */
+  siteRule?: {
+    ruleId: string;
+    host: string;
+    kind: "block" | "map";
+    /** 生效前的自动识别结果（改挂类规则用它说明「原来识别成了什么」） */
+    overriddenFieldId?: string;
+  };
 }
 
 /** 字数约束提示（不自动截断） */

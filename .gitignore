@@ -58,3 +58,4 @@ afa-私人留档/
 real-validation-results/**/*raw*.json
 real-validation-results/**/*write-data*.json
 real-validation-results/**/*.png
+!.env.example

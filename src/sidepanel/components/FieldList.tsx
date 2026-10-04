@@ -12,6 +12,10 @@ export interface FieldListProps {
   onIgnore: (reference: string) => void;
   onUnignore?: (reference: string) => void;
   onSwitchField?: (reference: string, fieldId: string) => void;
+  onConfirmLowConfidence?: (reference: string) => void;
+  onBlockOnSite?: (reference: string) => void;
+  onUndoSiteRule?: (ruleId: string) => void;
+  siteHost?: string;
   onLocate: (reference: string) => void;
   onGenerateAnswer?: (reference: string) => void;
   onRevalidateAnswer?: (reference: string) => void;
@@ -53,7 +57,9 @@ const BUCKETS: { id: BucketId; label: string; hint: string }[] = [
 ];
 
 function bucketOf(c: CandidateField): BucketId {
-  if (c.status === "need-confirm") return "review";
+  // 低置信不是「需人工处理」——资料有、字段也像，缺的只是人点一次头，
+  // 所以它和 AI 回答一起归到「需要你确认」那一桶，卡片上就带着放行按钮。
+  if (c.status === "need-confirm" || c.status === "low-confidence") return "review";
   if (c.status === "ready" || c.status === "filled") return "auto";
   return "manual";
 }
@@ -102,6 +108,10 @@ export function FieldList(props: FieldListProps) {
         onIgnore={props.onIgnore}
         onUnignore={props.onUnignore}
         onSwitchField={props.onSwitchField}
+        onConfirmLowConfidence={props.onConfirmLowConfidence}
+        onBlockOnSite={props.onBlockOnSite}
+        onUndoSiteRule={props.onUndoSiteRule}
+        siteHost={props.siteHost}
         onLocate={props.onLocate}
         onGenerateAnswer={props.onGenerateAnswer}
         onRevalidateAnswer={props.onRevalidateAnswer}

@@ -18,6 +18,10 @@ export interface FillReceiptProps {
   candidates: CandidateField[];
   onLocate: (reference: string) => void;
   onUnignore?: (reference: string) => void;
+  /** 回执里对低置信字段点头：翻成「待填写」，写入仍走 buildFillPlan 那道门 */
+  onConfirmLowConfidence?: (reference: string) => void;
+  /** 撤销一条站点设定（站点改版或改错了，不用去设置页翻） */
+  onUndoSiteRule?: (ruleId: string) => void;
 }
 
 function labelOf(c: CandidateField): string {
@@ -45,9 +49,13 @@ export function FillReceipt(props: FillReceiptProps) {
     (x) => x.risk === "MANUAL_ONLY" || x.status === "manual" || x.status === "unsupported",
   );
   const excluded = c.filter((x) => x.status === "excluded");
-  const ignored = c.filter((x) => x.status === "ignored");
+  /** 站点设定跳过的：那是「以前点过一次头」，和这次手点「忽略」不是一回事，得分开说 */
+  const siteIgnored = c.filter((x) => x.status === "ignored" && !!x.siteRule);
+  const ignored = c.filter((x) => x.status === "ignored" && !x.siteRule);
   const noContent = c.filter((x) => x.status === "empty");
   const unmatched = c.filter((x) => x.status === "unknown");
+  /** 识别把握不足、这次没有写进页面的：回执必须把它单列，不能算进「已填写」 */
+  const awaitingConfirm = c.filter((x) => x.status === "low-confidence");
   /** 已经写进去但把握不足的：这是回执里最该被看到的一格，不能混在「已填写」里 */
   const reviewAfterFill = filled.filter((x) => confidenceLevel(x.match.confidence) !== "HIGH" || x.risk === "REVIEW");
 
@@ -101,6 +109,33 @@ export function FillReceipt(props: FillReceiptProps) {
       list: blocked.map((x) => <Row key={x.raw.reference} c={x} note={x.riskReason} />),
     });
   }
+  if (awaitingConfirm.length) {
+    sections.push({
+      key: "awaiting",
+      tone: "review",
+      title: `把握不足，没有自动填写 ${awaitingConfirm.length} 项`,
+      hint: "识别到像哪个字段，但证据不够，扩展选择不硬填。核对无误就点这一行放行，再点「填写确认的 N 项」。",
+      list: awaitingConfirm.map((x) => (
+        <Row
+          key={x.raw.reference}
+          c={x}
+          note={x.riskReason}
+          action={
+            props.onConfirmLowConfidence && (
+              <button
+                type="button"
+                className="link-btn"
+                data-action="confirm-low"
+                onClick={() => props.onConfirmLowConfidence?.(x.raw.reference)}
+              >
+                核对过了，要填这一项
+              </button>
+            )
+          }
+        />
+      )),
+    });
+  }
   if (failed.length) {
     sections.push({
       key: "failed",
@@ -137,6 +172,32 @@ export function FillReceipt(props: FillReceiptProps) {
       list: excluded.map((x) => <Row key={x.raw.reference} c={x} note={x.riskReason} />),
     });
   }
+  if (siteIgnored.length) {
+    sections.push({
+      key: "siteIgnored",
+      tone: "muted",
+      title: `按你的站点设定跳过 ${siteIgnored.length} 项`,
+      hint: "这是你以前在这个招聘站上点过「这一站以后都别填」的栏目；要恢复自动填写就点撤销，不改网页。",
+      list: siteIgnored.map((x) => (
+        <Row
+          key={x.raw.reference}
+          c={x}
+          note={x.riskReason}
+          action={
+            props.onUndoSiteRule && (
+              <button
+                type="button"
+                className="link-btn"
+                onClick={() => props.onUndoSiteRule?.(x.siteRule!.ruleId)}
+              >
+                撤销这条站点设定
+              </button>
+            )
+          }
+        />
+      )),
+    });
+  }
   if (ignored.length) {
     sections.push({
       key: "ignored",
@@ -167,16 +228,23 @@ export function FillReceipt(props: FillReceiptProps) {
     );
   }
 
-  const total = filled.length + failed.length + blocked.length + noContent.length + unmatched.length;
+  const total =
+    filled.length +
+    failed.length +
+    blocked.length +
+    noContent.length +
+    unmatched.length +
+    awaitingConfirm.length +
+    siteIgnored.length;
   return (
-    <section className="receipt" data-filled={filled.length} data-blocked={blocked.length}>
+    <section className="receipt" data-filled={filled.length} data-blocked={blocked.length} data-awaiting={awaitingConfirm.length}>
       <button type="button" className="receipt-head" onClick={() => setOpen((v) => !v)}>
         <span className={`fold-caret ${open ? "open" : ""}`}>▸</span>
         {/* 「填写完成 ——」这个开头是既有契约（e2e/delivery-flow、safety-flow、compat 矩阵都按它等结果），
             回执改造只往后面加信息，不改前缀。 */}
         <span className="receipt-title">填写完成 —— 已填 {filled.length}</span>
         <span className="receipt-sum">
-          拦下 {blocked.length} · 未填成 {failed.length} · 共 {total}
+          拦下 {blocked.length} · 待你确认 {awaitingConfirm.length} · 未填成 {failed.length} · 共 {total}
         </span>
       </button>
       {open && (
