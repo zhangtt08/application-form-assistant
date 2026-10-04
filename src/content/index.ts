@@ -1,8 +1,24 @@
-import type { RuntimeMessage } from "../types/message";
+import type {
+  RuntimeMessage,
+  ScanPageResult,
+  FillFieldsResult,
+  UndoResult,
+  LocateFieldResult,
+  CaptureJobResult,
+  PingResult,
+} from "../types/message";
 import { scanPageSettled } from "./scanner";
 import { fillFields, locateField, undoFill } from "./filler";
 import { extractRawJobPage } from "./jobCapture";
 import { installRouteObserver, markWriterActive, isWriterActive, detectEnvironment as detectEnvironmentSnapshot } from "../compatibility/environmentDetector";
+import { logger } from "../utils/logger";
+import {
+  UNTRUSTED_SENDER,
+  checkFrameCommandSender,
+  describeRejection,
+  type GuardDecision,
+  type SenderLike,
+} from "../utils/messageGuard";
 
 /**
  * Content Script（IIFE，防重入）。
@@ -10,6 +26,12 @@ import { installRouteObserver, markWriterActive, isWriterActive, detectEnvironme
  * 写入与扫描都是异步的（等框架回显 / 等 SPA 把字段渲染出来），
  * 因此每个 case 都 `return true` 保活消息端口，由 Promise resolve 时 sendResponse。
  * 无任何自动触发：所有动作都由 Side Panel 的用户操作驱动。
+ *
+ * 来源校验（`utils/messageGuard` 判据 1 + 3）：这一侧是真往 DOM 写的那一侧，
+ * 所以只认「本扩展自己的页面」或「本 frame 自己的地址」发来的指令；
+ * 其它地址（典型是另一个 tab 的页面上下文）来的 FILL_FIELDS 一律不执行。
+ * 它和 `plan.confirmed` 那道 Writer 门禁是两条独立的闸：来源不对 → 不执行；
+ * 计划没确认 → 不执行。任何一条破口都不足以触发写入。
  */
 
 declare global {
@@ -59,9 +81,57 @@ function setupMutationObserver(): void {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+/** 本 content script 负责执行的指令类型 */
+const EXECUTABLE_TYPES = new Set<string>([
+  "PING",
+  "SCAN_PAGE",
+  "FILL_FIELDS",
+  "UNDO_FILL",
+  "LOCATE_FIELD",
+  "CAPTURE_JOB",
+]);
+
+/**
+ * 来源被拒时的回包：与各 result 类型对齐，界面上表现为「这一步失败」而不是永远等下去；
+ * 不带 sender 细节（那是本地日志的事，不是给用户看的）。
+ */
+function rejectionFor(msg: RuntimeMessage): unknown {
+  switch (msg.type) {
+    case "PING":
+      return { ok: false } satisfies PingResult;
+    case "SCAN_PAGE":
+      return { ok: false, fields: [], error: UNTRUSTED_SENDER } satisfies ScanPageResult;
+    case "FILL_FIELDS":
+      return { ok: false, outcomes: [], originals: [], error: UNTRUSTED_SENDER } satisfies FillFieldsResult;
+    case "UNDO_FILL":
+      return { ok: false, restored: 0, failed: 0, error: UNTRUSTED_SENDER } satisfies UndoResult;
+    case "LOCATE_FIELD":
+      return { ok: false, found: false, error: UNTRUSTED_SENDER } satisfies LocateFieldResult;
+    case "CAPTURE_JOB":
+      return { ok: false, error: UNTRUSTED_SENDER } satisfies CaptureJobResult;
+    default:
+      return { ok: false, error: "unknown-message" };
+  }
+}
+
+function logRejection(type: string, decision: GuardDecision, sender: SenderLike | undefined): void {
+  if (decision.ok) return;
+  logger.warn(describeRejection(type, decision, sender?.url ?? sender?.origin ?? sender?.tab?.url));
+}
+
 function init(): void {
-  chrome.runtime.onMessage.addListener((msg: RuntimeMessage, _sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener((msg: RuntimeMessage, sender: SenderLike, sendResponse) => {
     if (!msg) return false;
+
+    // 未知类型：和以前一样不处理、不回包（让别的监听者去接）
+    if (!EXECUTABLE_TYPES.has(msg.type)) return false;
+
+    const decision = checkFrameCommandSender(sender, chrome.runtime.id, document.URL);
+    if (!decision.ok) {
+      logRejection(msg.type, decision, sender);
+      sendResponse(rejectionFor(msg));
+      return false;
+    }
 
     switch (msg.type) {
       case "PING": {

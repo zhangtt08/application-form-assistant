@@ -37,6 +37,7 @@ import {
   calculateProfileCoverage,
   type ProfileSelection,
 } from "../profile/profileRouter";
+import { checkRuntimeBroadcasterSender } from "../utils/messageGuard";
 import { assembleProfile, loadStore, selectLibraryForDirection } from "../profile/libraryStore";
 import { profileHasContent } from "../profile/profileStore";
 import {
@@ -248,8 +249,12 @@ export default function App() {
   }, [initialized]);
 
   useEffect(() => {
-    const listener = (msg: { type?: string }) => {
-      if (msg?.type === "PAGE_MUTATED") setMutated(true);
+    // 提醒类广播同样要认来源（`utils/messageGuard` 判据 1 的广播版）：
+    // 只有本扩展自己（content script / service worker）发的才算「这一页变了」。
+    const listener = (msg: { type?: string }, sender?: { id?: string }) => {
+      if (msg?.type !== "PAGE_MUTATED") return;
+      if (!checkRuntimeBroadcasterSender(sender, chrome.runtime.id).ok) return;
+      setMutated(true);
     };
     chrome.runtime.onMessage.addListener(listener);
     return () => chrome.runtime.onMessage.removeListener(listener);

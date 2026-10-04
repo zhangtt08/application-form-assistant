@@ -81,6 +81,8 @@ export interface UndoResult {
   ok: boolean;
   restored: number;
   failed: number;
+  /** 撤销失败 / 来源被拒时的原因（content 侧 catch 分支早就在带这个字段，这里把它写进契约） */
+  error?: string;
 }
 
 /** Side Panel → Content：滚动定位 + 高亮（不修改） */
@@ -92,6 +94,8 @@ export interface LocateFieldMsg {
 export interface LocateFieldResult {
   ok: boolean;
   found: boolean;
+  /** 定位失败 / 来源被拒时的原因 */
+  error?: string;
 }
 
 export interface PingMsg {

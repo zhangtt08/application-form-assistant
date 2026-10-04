@@ -8,6 +8,15 @@ import type {
   CaptureJobResult,
 } from "../types/message";
 import type { RawField, FillOutcome } from "../types/field";
+import { logger } from "../utils/logger";
+import {
+  UNTRUSTED_SENDER,
+  checkExtensionCommandSender,
+  checkSenderTargetsSameTab,
+  describeRejection,
+  type GuardDecision,
+  type SenderLike,
+} from "../utils/messageGuard";
 
 /**
  * MV3 Service Worker —— 页面侧的唯一路由器。
@@ -16,6 +25,8 @@ import type { RawField, FillOutcome } from "../types/field";
  *  1. 点击工具栏图标时打开 Side Panel
  *  2. 把 content script 注入到 tab 的**所有 frame**（http/https）
  *  3. 把 Side Panel 的扫描 / 填写 / 撤销 / 定位 / 岗位采集请求按 frame 分发并聚合结果
+ *  4. 每一条 tab 指令先过来源校验（`utils/messageGuard`）：不是本扩展自己的页面 → 拒；
+ *     带着别的 tab 上下文的 sender 想指挥这个 tab → 拒。拒收只留一行脱敏日志。
  *
  * 为什么必须按 frame 分发：大量招聘官网（北森系、部分自建 ATS、被嵌入的第三方问卷）
  * 把真正的申请表单放在跨域 iframe 里。主 frame 的 content script 看不见它，
@@ -137,7 +148,7 @@ async function toContent<T>(tabId: number, frameId: number, msg: unknown): Promi
   }
 }
 
-async function ensureReady(): Promise<{ ok: boolean; url?: string; error?: string; detail?: string; tabId?: number }> {
+async function ensureReady(): Promise<ReadyState> {
   const tab = await getActiveTab();
   if (!tab?.id) return { ok: false, error: "no-active-tab" };
   const url = tab.url ?? "";
@@ -242,8 +253,83 @@ async function captureJob(tabId: number): Promise<CaptureJobResult> {
   return { ok: false, error: "no-job-content" };
 }
 
-chrome.runtime.onMessage.addListener((msg: RuntimeMessage, _sender, sendResponse) => {
+/** ensureReady 的结果形状（tab 定位 + 是否可注入） */
+interface ReadyState {
+  ok: boolean;
+  url?: string;
+  error?: string;
+  detail?: string;
+  tabId?: number;
+}
+
+/** Background 负责的 tab 指令；其余消息（PAGE_MUTATED 等）不由这里处理 */
+const TAB_BOUND_TYPES = new Set<string>([
+  "ENSURE_CONTENT_SCRIPT",
+  "SCAN_TARGET",
+  "FILL_TARGET",
+  "UNDO_TARGET",
+  "LOCATE_TARGET",
+  "CAPTURE_TARGET",
+]);
+
+/**
+ * 来源被拒时的回包：形状与各自的 result 类型对齐，
+ * 让界面显示「这次操作失败」而不是永远等下去。不带来源细节。
+ */
+function rejectionFor(msg: RuntimeMessage): unknown {
+  switch (msg.type) {
+    case "SCAN_TARGET":
+      return { ok: false, fields: [], error: UNTRUSTED_SENDER } satisfies ScanPageResult;
+    case "FILL_TARGET":
+      return { ok: false, outcomes: [], originals: [], error: UNTRUSTED_SENDER } satisfies FillFieldsResult;
+    case "UNDO_TARGET":
+      return { ok: false, restored: 0, failed: 0 } satisfies UndoResult;
+    case "LOCATE_TARGET":
+      return { ok: true, found: false };
+    case "CAPTURE_TARGET":
+      return { ok: false, error: UNTRUSTED_SENDER } satisfies CaptureJobResult;
+    case "ENSURE_CONTENT_SCRIPT":
+      return { ok: false, error: "inject-failed", detail: "消息来源未通过校验" } satisfies EnsureContentScriptResult;
+    default:
+      return { ok: false, error: "unknown-message" };
+  }
+}
+
+function logRejection(type: string, decision: GuardDecision, sender: SenderLike | undefined): void {
+  if (decision.ok) return;
+  logger.warn(describeRejection(type, decision, sender?.url ?? sender?.origin ?? sender?.tab?.url));
+}
+
+chrome.runtime.onMessage.addListener((msg: RuntimeMessage, sender: SenderLike, sendResponse) => {
   if (!msg || typeof msg.type !== "string") return false;
+  if (!TAB_BOUND_TYPES.has(msg.type)) return false;
+
+  /**
+   * 判据 1（来源）在分发前做一次：Side Panel 是本仓库唯一的指令来源，
+   * 因此「网页上下文的 sender」在这里就被挡下（比判据 2 更严，是刻意的）。
+   * 判据 2（tab 归属）要等目标 tab 定下来才能比，所以在 resolveTarget 里做：
+   * 带 tab 上下文的合法来源（扩展自己的页面被开成标签页时）只能指挥它自己那个 tab。
+   */
+  const command = checkExtensionCommandSender(sender, chrome.runtime.id);
+  if (!command.ok) {
+    logRejection(msg.type, command, sender);
+    sendResponse(rejectionFor(msg));
+    return false;
+  }
+
+  /** 目标 tab 解析 + tab 归属校验；`{ok:false}` 时 response 已是可直接回出去的形状 */
+  const resolveTarget = async (
+    onNotReady: (ready: ReadyState) => unknown,
+  ): Promise<{ ok: true; tabId: number } | { ok: false; response: unknown }> => {
+    const ready = await ensureReady();
+    if (!ready.ok || !ready.tabId) return { ok: false, response: onNotReady(ready) };
+    const bound = checkSenderTargetsSameTab(sender, { tabId: ready.tabId, url: ready.url }, chrome.runtime.id);
+    if (!bound.ok) {
+      logRejection(msg.type, bound, sender);
+      return { ok: false, response: rejectionFor(msg) };
+    }
+    return { ok: true, tabId: ready.tabId };
+  };
 
   const handle = async (): Promise<unknown> => {
     switch (msg.type) {
@@ -257,51 +343,43 @@ chrome.runtime.onMessage.addListener((msg: RuntimeMessage, _sender, sendResponse
         } satisfies EnsureContentScriptResult;
       }
       case "SCAN_TARGET": {
-        const ready = await ensureReady();
-        if (!ready.ok || !ready.tabId) return { ok: false, error: ready.detail ?? ready.error ?? "无法连接页面" } satisfies ScanPageResult;
-        return await scanAllFrames(ready.tabId);
+        const target = await resolveTarget(
+          (ready) => ({ ok: false, error: ready.detail ?? ready.error ?? "无法连接页面" }) satisfies ScanPageResult,
+        );
+        if (!target.ok) return target.response;
+        return await scanAllFrames(target.tabId);
       }
       case "FILL_TARGET": {
-        const ready = await ensureReady();
-        if (!ready.ok || !ready.tabId) return { ok: false, outcomes: [], originals: [], error: "无法连接页面" } satisfies FillFieldsResult;
-        return await fillByFrames(ready.tabId, msg.plan);
+        const target = await resolveTarget(() => ({ ok: false, outcomes: [], originals: [], error: "无法连接页面" }) satisfies FillFieldsResult);
+        if (!target.ok) return target.response;
+        return await fillByFrames(target.tabId, msg.plan);
       }
       case "UNDO_TARGET": {
-        const ready = await ensureReady();
-        if (!ready.ok || !ready.tabId) return { ok: false, restored: 0, failed: 0 } satisfies UndoResult;
-        return await undoByFrames(ready.tabId, msg.originals);
+        const target = await resolveTarget(() => ({ ok: false, restored: 0, failed: 0 }) satisfies UndoResult);
+        if (!target.ok) return target.response;
+        return await undoByFrames(target.tabId, msg.originals);
       }
       case "LOCATE_TARGET": {
-        const ready = await ensureReady();
-        if (!ready.ok || !ready.tabId) return { ok: true, found: false } satisfies { ok: boolean; found: boolean };
-        const res = await toContent<{ ok: boolean; found: boolean }>(ready.tabId, msg.frameId ?? 0, {
+        const target = await resolveTarget(() => ({ ok: true, found: false }));
+        if (!target.ok) return target.response;
+        const res = await toContent<{ ok: boolean; found: boolean }>(target.tabId, msg.frameId ?? 0, {
           type: "LOCATE_FIELD",
           reference: msg.reference,
         });
         return res ?? { ok: true, found: false };
       }
       case "CAPTURE_TARGET": {
-        const ready = await ensureReady();
-        if (!ready.ok || !ready.tabId) return { ok: false, error: "无法连接页面" } satisfies CaptureJobResult;
-        return await captureJob(ready.tabId);
+        const target = await resolveTarget(() => ({ ok: false, error: "无法连接页面" }) satisfies CaptureJobResult);
+        if (!target.ok) return target.response;
+        return await captureJob(target.tabId);
       }
       default:
         return { ok: false, error: "unknown-message" };
     }
   };
 
-  if (
-    msg.type === "ENSURE_CONTENT_SCRIPT" ||
-    msg.type === "SCAN_TARGET" ||
-    msg.type === "FILL_TARGET" ||
-    msg.type === "UNDO_TARGET" ||
-    msg.type === "LOCATE_TARGET" ||
-    msg.type === "CAPTURE_TARGET"
-  ) {
-    handle()
-      .then(sendResponse)
-      .catch((err) => sendResponse({ ok: false, error: String(err), outcomes: [], originals: [] }));
-    return true; // 异步响应
-  }
-  return false;
+  handle()
+    .then(sendResponse)
+    .catch((err) => sendResponse({ ok: false, error: String(err), outcomes: [], originals: [] }));
+  return true; // 异步响应
 });
