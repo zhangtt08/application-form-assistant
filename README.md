@@ -29,7 +29,7 @@ Every careers site makes you re-type the same name, phone number, education and 
 - **Multi-library profiles** — one `shared` profile (name, contact, education, sensitive info) plus any number of per-direction libraries (e.g. product vs. operations) that auto-switch based on the detected job direction. English ATS sites' `First name`/`Last name` split is fed from explicit fields — the extension never guesses how to split your name.
 - **Yes/No questions, answered once** — availability questions (on-site/online interview, travel, relocation, overtime…) are stored once per profile and matched by polarity, so it will never tick "No" just because a library is missing an experience entry.
 - **Plain-text resume import** — paste a Chinese resume as text and an offline rule parser (no network, no upload, no API key) extracts sections, experiences and skills, with a preview before anything is saved; unparseable input is rejected wholesale and existing data is untouched.
-- **Optional AI providers** — Mock (offline) / DeepSeek / OpenAI-compatible endpoints. API keys live only in `chrome.storage.local`, never in code or logs.
+- **Optional AI providers** — Mock (offline) / DeepSeek / OpenAI-compatible endpoints. By default the API key is held **in memory for the current side-panel session only and is never written to disk**; keeping it on the machine is an explicit, separately-labelled opt-in (checkbox) that spells out the warning in the UI. Either way the key never appears in code, logs, traces or the bundle. What the opt-in gives you is *storage*, not *protection*: `chrome.storage.local` is an unencrypted leveldb file with no access control, so any process running as your user that can read the profile directory can read the key.
 - **Job pipeline tracking** — a local Job → Session → Timeline state machine (saved → preparing → applying → submitted → assessment → interview → offer/rejected/…) with no backend and no telemetry.
 - **Local Agent API / MCP** — a read-only `afa.*` tool surface that reuses the extension's own matching, risk and fill-plan code, so an external agent gets the same verdicts the side panel shows. See [Agent API / MCP](#-agent-api--mcp).
 
@@ -45,7 +45,7 @@ These are product decisions, not limitations to be optimised away. Each one is e
 | **No invented values** — empty stays empty; over-length values and values a numeric control cannot hold are handed back to you instead of being truncated or rewritten | `src/pipeline/scanPipeline.ts` (`deriveStatus`) |
 | **Demographics are not "profile data"** — EEO / ethnicity / disability / veteran self-declaration questions are never auto-answered, even when an alias matches | `src/matching/matcher.ts` (`PROTECTED_CLASS_MARKERS`) |
 | **Other people's fields are not yours** — a label saying "referee / 推荐人 / parent" is never filled with *your* name or phone | `src/matching/matcher.ts` (`OTHER_PERSON_MARKERS`) |
-| **Local only** — no backend, no telemetry; the only outbound network calls are the AI providers you explicitly configure, and keys never leave `chrome.storage.local` | `src/generation/provider.ts` |
+| **Local only** — no cloud backend, no telemetry; the only outbound network calls are the AI providers you explicitly configure. The API key is in memory for the session by default; only the labelled opt-in puts it in `chrome.storage.local`, which is unencrypted storage, not protection | `src/generation/provider.ts` |
 
 ## 🚀 Quick Start
 
@@ -107,7 +107,7 @@ See [`agent/README.md`](agent/README.md) for the contract, schemas and the jsdom
 
 ## 🏗️ Architecture / How it works
 
-Data flow: **Scan → Recognize → Match → Risk Check → Fill**, with results bucketed as `filled / awaiting your input / fill manually`. All data lives in `chrome.storage.local` — there is no backend and no telemetry.
+Data flow: **Scan → Recognize → Match → Risk Check → Fill**, with results bucketed as `filled / awaiting your input / fill manually`. Your profile, jobs and timeline live in `chrome.storage.local` — there is no cloud backend and no telemetry. The one thing that by default is *not* on disk is the AI provider API key (session memory unless you tick the labelled opt-in; see [Safety red lines](#-safety-red-lines)).
 
 ```
 public/manifest.json     MV3 manifest: side panel + service worker + all-frames content script

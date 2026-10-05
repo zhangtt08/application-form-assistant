@@ -4,8 +4,8 @@ import type { GenerationErrorCode, LLMProvider, LLMRequest, LLMResponse } from "
  * Provider 抽象（spec Stage 3.5 第二/三章）：
  * - 业务代码只依赖 LLMProvider 接口，不绑定具体厂商
  * - MockLLMProvider：确定性输出，Unit/Integration/E2E 全部使用（离线/稳定/免费）
- * - OpenAICompatibleProvider：真实适配器；API Key 只存 chrome.storage，
- *   禁止写源码/进 git/进测试 fixture/进 trace/snapshot/进 bundle 常量
+ * - OpenAICompatibleProvider：真实适配器；API Key 的存放口径见下面 ProviderConfig 的注释
+ *   （默认只在本会话内存里，持久化是显式 opt-in，且它从来不是「加密」）
  * - Local Provider Bridge：将 baseUrl 指向本地代理服务即可（架构无需额外代码）
  */
 
@@ -13,12 +13,48 @@ export interface ProviderConfig {
   providerType: "mock" | "deepseek" | "openai-compatible";
   baseUrl?: string;
   model?: string;
-  /** 仅存 chrome.storage.local，绝不离机、不进 trace/snapshot */
+  /**
+   * API Key。
+   * **默认只在内存里活一次会话**：`saveGenerationSettings` 不把它写盘，
+   * 关掉 Side Panel / 浏览器就要重新粘贴。
+   * 想让它留下来，必须显式勾选 `persistApiKey`（界面上带警告）。
+   * 无论哪种，都绝不进代码 / 日志 / trace / snapshot / bundle 常量。
+   */
   apiKey?: string;
+  /**
+   * 显式 opt-in：把 API Key 留在 `chrome.storage.local`。
+   * ⚠ 那是**存储**，不是**保护**：扩展自己的 storage.local 是明文（leveldb），
+   *   不加密、不访问控制，本机其它进程读到文件就等于拿到 Key。
+   */
+  persistApiKey?: boolean;
   temperature?: number;
   maxTokens?: number;
   /** Mock 故障注入脚本（一次性）：E2E Scenario L/N 使用 */
   mockScript?: { draft?: string; error?: GenerationErrorCode } | null;
+}
+
+/** 勾选「留在本机」时界面上必须原样出现的警告（与 README 的口径同一句话） */
+export const PERSIST_KEY_WARNING =
+  "勾选后，API Key 会写进这台机器的扩展存储（chrome.storage.local）。那是明文文件，不加密、没有访问控制——本机其它进程读到它就等于读到你的 Key。默认不勾选：Key 只在本次会话内存里，关掉侧边栏或浏览器就要重新粘贴。";
+
+/** 当前 Key 到底落在哪里（界面与测试共用一句判定） */
+export type ApiKeyPlacement = "none" | "session" | "persisted";
+
+export function apiKeyPlacement(config: Pick<ProviderConfig, "apiKey" | "persistApiKey">): ApiKeyPlacement {
+  if (!config.apiKey) return "none";
+  return config.persistApiKey === true ? "persisted" : "session";
+}
+
+/** 三态的中文说法；措辞只描述事实，不描述保障 */
+export function describeApiKeyPlacement(config: Pick<ProviderConfig, "apiKey" | "persistApiKey">): string {
+  switch (apiKeyPlacement(config)) {
+    case "none":
+      return "当前没有 API Key：只填你资料库里已有的内容，开放题会提示信息不足而不是编造。";
+    case "persisted":
+      return "当前：API Key 存在这台机器的扩展存储里（明文文件，本机其它进程读得到）。取消勾选即可收回。";
+    case "session":
+      return "当前：API Key 只在本次会话的内存里，磁盘上没有它；关掉侧边栏或浏览器后需要重新粘贴。";
+  }
 }
 
 /**
@@ -91,24 +127,90 @@ const SETTINGS_KEY = "afa.generation.settings.v1";
 
 const DEFAULT_CONFIG: ProviderConfig = { providerType: "mock" };
 
-export async function loadGenerationSettings(): Promise<ProviderConfig> {
-  if (typeof chrome === "undefined" || !chrome.storage?.local) return { ...DEFAULT_CONFIG };
+/**
+ * 本会话内存里的 API Key。
+ * 模块级变量：Side Panel 文档活着它就活着，面板关掉 / 浏览器重启即失效。
+ * 这不是加密存储，也不是安全边界 —— 它只是「不落到磁盘」这件事的唯一实现处。
+ * 只有 `persistApiKey === true` 时磁盘上那份才算数（见 load / save）。
+ */
+let sessionApiKey: string | null = null;
+
+/** 测试与「清除」用：把内存里那份也丢掉 */
+export function clearSessionApiKey(): void {
+  sessionApiKey = null;
+}
+
+function hasText(v: unknown): v is string {
+  return typeof v === "string" && v.length > 0;
+}
+
+function storageAvailable(): boolean {
+  return typeof chrome !== "undefined" && !!chrome.storage?.local;
+}
+
+async function readStoredSettings(): Promise<Record<string, unknown> | null> {
+  if (!storageAvailable()) return null;
   try {
     const result = await chrome.storage.local.get(SETTINGS_KEY);
     const raw = result[SETTINGS_KEY];
-    if (raw && typeof raw === "object") {
-      // 合并默认值：部分写入（如仅 mockScript）不丢失 providerType 默认 mock
-      return { ...DEFAULT_CONFIG, ...(raw as ProviderConfig) };
-    }
+    return raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
   } catch {
-    // fallthrough
+    return null;
   }
-  return { ...DEFAULT_CONFIG };
 }
 
+/** 唯一写盘入口：apiKey 只在 `persistApiKey === true` 时才会出现在这份记录里 */
+async function writeStoredSettings(record: Record<string, unknown>): Promise<void> {
+  if (!storageAvailable()) return;
+  await chrome.storage.local.set({ [SETTINGS_KEY]: record });
+}
+
+export async function loadGenerationSettings(): Promise<ProviderConfig> {
+  const stored = await readStoredSettings();
+  if (!stored) return { ...DEFAULT_CONFIG, apiKey: sessionApiKey ?? undefined };
+
+  const storedKey = hasText(stored.apiKey) ? stored.apiKey : null;
+  if (stored.persistApiKey === true) {
+    // 勾了「留在本机」：磁盘是唯一事实源（内存跟它对齐，含被外部清掉的情况）
+    sessionApiKey = storedKey;
+  } else if (storedKey) {
+    // 历史遗留：默认改成「不落盘」之前，整个配置（含 Key）是写盘的，很多机器上 Key 还躺着。
+    // 读到就顺手从磁盘抹掉，本会话继续用（不让用户白粘一次）——
+    // 磁盘状态从此才能和文档那句话对上，而且这句话是可以用文件本身核对的。
+    sessionApiKey = storedKey;
+    const { apiKey: _dropped, ...rest } = stored;
+    await writeStoredSettings({ ...rest, persistApiKey: false });
+  }
+
+  const { apiKey: _ignored, ...rest } = stored;
+  // 合并默认值：部分写入（如仅 mockScript）不丢失 providerType 默认 mock
+  return { ...DEFAULT_CONFIG, ...(rest as Partial<ProviderConfig>), apiKey: sessionApiKey ?? undefined };
+}
+
+/**
+ * 保存配置。
+ * 默认（`persistApiKey` 非 true）：**apiKey 不落盘**，只进本会话内存；
+ * 磁盘记录里也不留残留（显式写 `persistApiKey: false`，顺带覆盖老版本存的那份）。
+ */
 export async function saveGenerationSettings(config: ProviderConfig): Promise<void> {
-  if (typeof chrome === "undefined" || !chrome.storage?.local) return;
-  await chrome.storage.local.set({ [SETTINGS_KEY]: config });
+  sessionApiKey = hasText(config.apiKey) ? config.apiKey : null;
+  const { apiKey, persistApiKey, ...rest } = config;
+  const record: Record<string, unknown> = { ...rest, persistApiKey: persistApiKey === true };
+  if (persistApiKey === true && hasText(apiKey)) record.apiKey = apiKey;
+  await writeStoredSettings(record);
+}
+
+/**
+ * 取消「留在本机」：磁盘那份抹掉、opt-in 关掉，内存那份也一起丢。
+ * 返回清除后的配置（其它设置原样保留）。
+ */
+export async function clearPersistedApiKey(): Promise<ProviderConfig> {
+  const stored = (await readStoredSettings()) ?? {};
+  const { apiKey: _dropped, ...rest } = stored;
+  await writeStoredSettings({ ...rest, persistApiKey: false });
+  clearSessionApiKey();
+  const cleaned = rest as Partial<ProviderConfig>;
+  return { ...DEFAULT_CONFIG, ...cleaned, apiKey: undefined, persistApiKey: false };
 }
 
 /** Mock 故障注入（一次性）：E2E 用它驱动「unsupported draft / provider 抛错」 */

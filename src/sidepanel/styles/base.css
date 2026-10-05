@@ -1292,6 +1292,33 @@ input.field-value:focus { border-color: var(--accent); background: var(--panel);
 .ps-health.ok { color: var(--safe); }
 .ps-health.bad { color: var(--manual); }
 
+/* Provider Key 存放口径：opt-in 勾选框 + 警告（告警色用 --review，措辞与代码/README 同一句） */
+.pe-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+
+.pe-check input {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+
+.ps-warning {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--review-bg);
+  border-radius: var(--radius);
+  background: var(--review-bg);
+  color: var(--review);
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
 /* ===== 调试 Trace ===== */
 
 .trace-viewer {

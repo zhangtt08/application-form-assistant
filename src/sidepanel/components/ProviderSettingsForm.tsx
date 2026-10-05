@@ -1,6 +1,9 @@
 import { useState } from "react";
 import {
+  PERSIST_KEY_WARNING,
   checkProviderHealth,
+  clearPersistedApiKey,
+  describeApiKeyPlacement,
   loadGenerationSettings,
   saveGenerationSettings,
   PROVIDER_PRESETS,
@@ -12,7 +15,12 @@ import {
 /**
  * AI Provider 设置（spec Stage 3.5 第四章）。
  * Provider / Base URL / Model / API Key（password）/ Test Connection。
- * Key 只存 chrome.storage，绝不回显完整内容。
+ *
+ * Key 的口径（界面必须说的和代码做的是同一件事）：
+ * 默认**只写进本会话内存**，磁盘上那台机器的记录里没有它；
+ * 「留在本机」是一个显式勾选项，勾上才写 `chrome.storage.local`，
+ * 而那是明文文件 —— 所以勾选框旁边必须把警告一起显示出来，不能只写个「安全保存」。
+ * Key 永远不回显完整内容（password 输入框 + 只显示来源说明）。
  *
  * 多 Provider 走「预设」而不是分支：DeepSeek 与 OpenAI 兼容同一套协议，
  * 选 DeepSeek 时自动带出地址与模型，用户只需要粘 Key。
@@ -67,6 +75,13 @@ export function ProviderSettingsForm() {
     setStatus(result);
   };
 
+  /** 收回 opt-in：磁盘那份抹掉、内存那份也丢，其它设置原样留着 */
+  const clearKey = async () => {
+    const next = await clearPersistedApiKey();
+    setConfig(next);
+    setStatus(null);
+  };
+
   const type = config?.providerType ?? "mock";
   const preset = PROVIDER_PRESETS[type];
 
@@ -82,7 +97,7 @@ export function ProviderSettingsForm() {
 
       <p className="muted small">
         不配也能用：不配模型时只会填写你已准备好的资料，开放题会提示信息不足而不是编造。
-        API Key 仅保存在本机扩展存储，不进入代码仓库与日志。
+        API Key 默认只留在本次会话的内存里，不进代码仓库、不进日志，也不写磁盘。
       </p>
 
       <label className="pe-row">
@@ -135,10 +150,32 @@ export function ProviderSettingsForm() {
             <input
               type="password"
               value={config?.apiKey ?? ""}
-              placeholder="仅存本机，不回显"
+              placeholder="只留在本次会话，不回显"
               onChange={(e) => void update({ apiKey: e.target.value })}
             />
           </label>
+
+          {/* 说的是代码真实做到的事：默认不写盘，勾了才写，而写进去也不是加密 */}
+          <p className="muted small">{describeApiKeyPlacement(config ?? {})}</p>
+
+          <label className="pe-row pe-check">
+            <input
+              type="checkbox"
+              checked={config?.persistApiKey === true}
+              onChange={(e) => void update({ persistApiKey: e.target.checked })}
+            />
+            <span>把 API Key 留在这台机器上（不推荐）</span>
+          </label>
+
+          <p className="ps-warning">{PERSIST_KEY_WARNING}</p>
+
+          {config?.persistApiKey === true && (
+            <div className="ps-actions">
+              <button type="button" className="btn-sm" onClick={() => void clearKey()}>
+                清除本机保存的 Key
+              </button>
+            </div>
+          )}
 
           {isReasoningModel(config?.model) && (
             <p className="muted small">推理型模型不接受 temperature，已自动不发送该参数；响应也会更慢。</p>

@@ -59,7 +59,7 @@ npm run eval:generation  # 生成质量评测（需要 Provider，见下文）
 | **绝不编造值** —— 资料库没有就留空；超出字数上限、数字框收不下的值交回人工，不截断也不改写 | `src/pipeline/scanPipeline.ts`（`deriveStatus`） |
 | **人口统计/受保护类别不是资料** —— 民族、种族、残障、兵役、EEO 自证题即使别名命中也绝不自动写 | `src/matching/matcher.ts`（`PROTECTED_CLASS_MARKERS`） |
 | **别人的字段不是你的** —— 标签写着「推荐人 / 内推人 / 家长 / 紧急联系人」时，不许拿你本人的姓名手机去顶 | `src/matching/matcher.ts`（`OTHER_PERSON_MARKERS`） |
-| **只在本地** —— 无后端、无埋点；唯一的外呼是你明确配置过的 AI Provider，Key 只存 `chrome.storage.local` | `src/generation/provider.ts` |
+| **只在本地** —— 无云端后端、无埋点；唯一的外呼是你明确配置过的 AI Provider。API Key 默认只在本次会话内存里、不写磁盘；勾选「留在这台机器」才会进 `chrome.storage.local` —— 那是**存储**不是**保护**（明文文件、不加密、无访问控制） | `src/generation/provider.ts` |
 
 ## Agent API / MCP
 
@@ -190,7 +190,13 @@ npm run agent:mcp        # MCP stdio 桥（任何 MCP 客户端可直接接同�
 AI Provider 支持 **Mock（离线）/ DeepSeek / OpenAI 兼容（自定义 / 本地代理）**：
 选 DeepSeek 会自动带出 `https://api.deepseek.com/v1` 与 `deepseek-chat`，只需要粘 API Key。
 `deepseek-reasoner` 等推理型模型不会发送 `temperature`；期望 JSON 的请求会带
-`response_format: { type: "json_object" }`。Key 只存 `chrome.storage.local`，不进代码与日志。
+`response_format: { type: "json_object" }`。
+**Key 的存放**：默认只留在本次会话的内存里，磁盘上的配置记录里没有它（关掉侧边栏或浏览器就要重新粘贴）；
+界面上的「把 API Key 留在这台机器上（不推荐）」是显式勾选，勾了才写 `chrome.storage.local`，
+警告文案就贴在勾选框下面。要写清楚的是：`chrome.storage.local` 是明文 leveldb 文件，不加密、
+没有访问控制，本机其它进程读到那个文件就等于读到 Key —— 所以勾选带来的是**留存**，不是**保护**。
+两种情况都一样：Key 不进代码仓库、不进日志、不进 trace/snapshot，界面也不回显完整内容。
+`clearPersistedApiKey()` 会把磁盘和内存两份一起收回。
 
 ## UI 冒烟验证
 
