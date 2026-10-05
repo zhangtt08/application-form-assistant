@@ -2,6 +2,8 @@
 // MCP (Model Context Protocol) stdio 桥 —— 标准实现，把所有项目的 Agent API 暴露为 MCP tools。
 // 用法：node <project>/agent/mcp-server.mjs
 // 逻辑：读 agent/.endpoint（或 AGENT_BASE_URL）；不通则按 agent/README 里登记的启动命令自动拉起本地服务。
+// 本机守卫要求非 GET 带令牌：令牌头名与令牌文件从 GET /api/agent/manifest 的 api 段读
+// （manifest 是只读端点，不需要令牌）；AGENT_API_TOKEN 环境变量优先。
 import { spawn } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -10,7 +12,7 @@ import path from 'node:path';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const PROTOCOL = '2.2.0';
-const SERVER_INFO = { name: path.basename(PROJECT_ROOT) + '-agent-api', version: '1.0.0' };
+const SERVER_INFO = { name: path.basename(PROJECT_ROOT) + '-agent-api', version: '1.1.0' };
 
 const log = (...a) => process.stderr.write(`[mcp] ${a.join(' ')}\n`);
 
@@ -19,15 +21,39 @@ function endpointFile() {
   return existsSync(p) ? readFileSync(p, 'utf8').trim() : null;
 }
 
+// 每次调用现读令牌，不在模块加载时缓存：自动拉起的路上桥先于服务端写好文件，
+// 服务端第一次起来之后 manifest 才能给出准确的 token_file。
+async function authFor(base) {
+  try {
+    const r = await fetch(`${base}/api/agent/manifest`, { signal: AbortSignal.timeout(3000) });
+    const body = await r.json().catch(() => ({}));
+    const api = body?.data?.api || {};
+    const header = String(api.token_header || '').trim();
+    if (!header) return {};
+    if (process.env.AGENT_API_TOKEN) return { header, token: process.env.AGENT_API_TOKEN };
+    if (api.token_file && existsSync(api.token_file)) {
+      const token = readFileSync(api.token_file, 'utf8').trim();
+      if (token) return { header, token };
+    }
+    return { header };
+  } catch { return {}; }
+}
+
 async function rpc(base, method, params) {
+  const auth = await authFor(base);
+  const headers = { 'content-type': 'application/json', ...(auth.header && auth.token ? { [auth.header]: auth.token } : {}) };
   const res = await fetch(`${base}/api/agent/${method === 'tools/list' ? 'tools' : 'tool'}`, {
     method: method === 'tools/list' ? 'GET' : 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers,
     body: method === 'tools/list' ? undefined : JSON.stringify(params),
     signal: AbortSignal.timeout(120_000),
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok || body.ok === false) throw new Error(body?.error?.message || `HTTP ${res.status}`);
+  if (!res.ok || body.ok === false) {
+    const reason = body?.error?.message || `HTTP ${res.status}`;
+    if (res.status === 401) throw new Error(`${reason}（本桥没读到本机令牌：服务没起来、或 AGENT_API_DATA_DIR 与服务端不是同一个目录）`);
+    throw new Error(reason);
+  }
   return body;
 }
 
@@ -39,11 +65,12 @@ async function ensureBase() {
       if (r.ok) return base;
     } catch { /* 继续尝试 */ }
   }
-  // 自动拉起：约定 agent/launch.json = {"command":"node","args":["agent/server.mjs"],"ready_port":8791}
+  // 自动拉起：约定 agent/launch.json = {"command":"node","args":["agent/server.mjs"],"ready_port":8790}
   const launchFile = path.join(__dirname, 'launch.json');
   if (!existsSync(launchFile)) throw new Error(`Agent 服务未启动且缺少 ${launchFile}；请先运行 npm run agent:serve`);
   const spec = JSON.parse(readFileSync(launchFile, 'utf8'));
-  const child = spawn(spec.command, spec.args, { cwd: PROJECT_ROOT, stdio: 'ignore', detached: true, shell: false });
+  // 把 ready_port 传给服务端（AGENT_PORT）：端口被占时服务端会自动 +1 并写 .endpoint，扫描照样找得到。
+  const child = spawn(spec.command, spec.args, { cwd: PROJECT_ROOT, stdio: 'ignore', detached: true, shell: false, env: { ...process.env, AGENT_PORT: String(spec.ready_port || 8790) } });
   child.unref();
   const port = spec.ready_port || 8790;
   for (let i = 0; i < 60; i++) {

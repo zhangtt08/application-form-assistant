@@ -40,6 +40,8 @@ function pathToFileURLString(p) {
 }
 
 export const project = {
+  id: "afa",
+  port: 8797,
   name: "afa",
   version: "0.1.0",
   summary:
@@ -778,7 +780,7 @@ export const tools = [
         { key: "afa.sessions.v2", module: "src/workspace/workspaceRepository.ts", holds: "ApplicationSessionV2（一次申请的工作区状态）", pii: false },
         { key: "afa.events.v1", module: "src/workspace/workspaceRepository.ts", holds: "用户 Timeline 事件（最近 200 条）", pii: false },
         { key: "afa.profilepacks.v1", module: "src/profile/pack/packStore.ts", holds: "Effective Profile Pack（填写版本/变体策略）", pii: false },
-        { key: "afa.generation.settings.v1", module: "src/generation/provider.ts", holds: "模型提供方设置：baseURL 与 Key 只存这台机器", pii: true, note: "含 API Key，永不导出、永不回显值" },
+        { key: "afa.generation.settings.v1", module: "src/generation/provider.ts", holds: "模型提供方设置：baseURL / 模型名 / mockScript；API Key 默认不写盘（只在本会话内存），只有「留在本机」勾选项生效时才会出现在这里", pii: true, note: "Key 永不导出、永不回显值；chrome.storage.local 是明文存储，opt-in 之后拿到的是留存而不是保护" },
         { key: "afa.generation.snapshots.v1", module: "src/generation/generationStore.ts", holds: "生成快照（用于事实溯源）", pii: true },
         { key: "afa.answer.cache.v1", module: "src/answering/answerStore.ts", holds: "按问题+事实集+提示词版本缓存的回答", pii: true },
         { key: "afa.apply.prefs.v1", module: "src/sidepanel/prefs.ts", holds: "autoFill / autoCaptureJob / showDev 三个开关", pii: false },

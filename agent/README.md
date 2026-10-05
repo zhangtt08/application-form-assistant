@@ -57,21 +57,35 @@ agent/tools.mjs
 
 ## HTTP 契约
 
+## 本机守卫（标准第 1~5 条）
+
+服务只绑 `127.0.0.1`；Host 必须逐字是 `127.0.0.1:8797 / localhost:8797 / [::1]:8797`（挡 DNS rebinding）；
+Origin/Referer 只要出现就必须落在本机回环上；**非 GET 必须带令牌**，请求头 `x-afa-token`；
+任何响应都不发 `Access-Control-Allow-Origin: *`，跨源页面连预检都过不了。
+
+令牌不用配置：首次启动自动生成并落盘（`%APPDATA%\afa\agent-api.token`，0600），
+路径随 `GET /api/agent/manifest` 的 `api.token_file` 公布，MCP 桥自动读取；
+用 `AGENT_API_TOKEN` 环境变量可显式覆盖，`AGENT_API_DATA_DIR` 改落盘目录（测试用）。
+
+## HTTP 契约
+
 ```
-GET  /api/health          -> {ok:true,data:{project:"afa",version,agent_api:1,tools:8,uptime_ms}}
-GET  /api/agent/manifest  -> {ok:true,data:{project,version,base_url,tools:[...]}}
+GET  /api/health          -> {ok:true,data:{project:"afa",version,agent_api:1,tools:8,uptime_ms,guard:{...}}}
+GET  /api/agent/manifest  -> {ok:true,data:{...,api:{token_header:"x-afa-token",token_env,token_file}}}
 GET  /api/agent/tools     -> {ok:true,data:[{name,description,input_schema,risk}]}
 POST /api/agent/tool      -> body {tool:"afa.scan_form",input:{...}} -> {ok:true,data,tool,ms}
                              失败 -> {ok:false,error:{code,message}}   (HTTP 400/500)
 ```
 
-未知工具返回 `unknown_tool` 并带 `available` 全清单；缺必填/多传参数返回 `bad_input`。
+未知工具返回 `unknown_tool` 并带 `available` 全清单；缺必填/多传参数返回 `bad_input`；
+坏 JSON / 超大请求体按 4xx 返回，绝不冒充 500。
 
 ```bash
 curl -s http://127.0.0.1:8797/api/health
 curl -s http://127.0.0.1:8797/api/agent/tools
+TOKEN=$(cat "$APPDATA/afa/agent-api.token")
 curl -s -X POST http://127.0.0.1:8797/api/agent/tool \
-  -H 'content-type: application/json' \
+  -H 'content-type: application/json' -H "x-afa-token: $TOKEN" \
   -d '{"tool":"afa.match_question","input":{"question":"毕业院校","section":"教育经历"}}'
 ```
 
@@ -79,14 +93,17 @@ curl -s -X POST http://127.0.0.1:8797/api/agent/tool \
 
 任何 MCP 客户端直接起 `node agent/mcp-server.mjs`：`tools/list` 转发 `/api/agent/tools`，
 `tools/call` 转发 `POST /api/agent/tool`。服务没起时桥按 `agent/launch.json`
-（`{"command":"node","args":["agent/server.mjs"],"ready_port":8797}`）自行拉起。
+（`{"command":"node","args":["agent/server.mjs"],"ready_port":8797}`）自行拉起——
+桥会把 ready_port 作为 `AGENT_PORT` 传给服务端，并从 manifest 的 `api` 段自动带 `x-afa-token`。
 
 ## 文件
 
 | 文件 | 说明 |
 | --- | --- |
-| `server.mjs` | 标准实现。与模板只有两处差异：默认端口 8790→8797（项目相关值），以及补上未知工具分支缺的 `return`（模板缺这一行会让请求穿透到 `tool.input_schema`，抛 TypeError 后二次写响应 → `ERR_HTTP_HEADERS_SENT` → 进程退出） |
-| `mcp-server.mjs` | 标准实现，与模板逐字节相同 |
+| `server.mjs` | 标准实现（本机守卫版），与模板逐字节相同。端口与令牌头从 `tools.mjs` 的 `project` 声明推导：`id:"afa"` → `x-afa-token`，`port:8797` |
+| `local-guard.mjs` | 模板件：Host/Origin/Referer/令牌的唯一判据 |
+| `token-store.mjs` | 模板件：令牌自动生成、落盘 0600 |
+| `mcp-server.mjs` | 标准实现，与模板逐字节相同；令牌从 manifest 的 `api` 段自发现 |
 | `tools.mjs` | **本项目唯一写的逻辑**：八个工具，全部只读 |
 | `ts-loader.mjs` | Node ESM 扩展名补全钩子（`.ts`/`.tsx`/`index.ts`），不做转译、不替换逻辑 |
 | `launch.json` | MCP 桥的自启动声明 |
@@ -97,5 +114,7 @@ curl -s -X POST http://127.0.0.1:8797/api/agent/tool \
 `read_profile` / `scan_form` / `plan_fill` 的输出会进模型上下文，所以个人标识默认不外发：
 姓名只给首字，手机/邮箱/身份证/住址/出生日期/紧急联系人只给长度与打码形态，
 其余值截断到 160 字。判据与 `docs/TEST_DATA_POLICY.md` 的 Forbidden 表一致。
-`storage_overview` 会指出 `afa.generation.settings.v1` 里存着模型 API Key——它只报「这个键存在」，
-永不回显值，也没有任何工具会去读它。
+`storage_overview` 会列出 `afa.generation.settings.v1` 这个键并说明它可能含什么——它只报「这个键存在」，
+永不回显值，也没有任何工具会去读它。这里的口径与扩展一致：API Key **默认不写磁盘**（只活在侧边栏本次
+会话的内存里），只有用户在界面上勾了「把 API Key 留在这台机器上（不推荐）」才会进 `chrome.storage.local`；
+而那是明文 leveldb 文件，不加密、无访问控制——所以勾选换来的是**留存**，不是**保护**。
