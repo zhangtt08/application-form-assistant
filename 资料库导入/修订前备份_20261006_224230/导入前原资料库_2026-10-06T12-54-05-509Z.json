@@ -1,0 +1,326 @@
+{
+  "afa.profile.v1": {
+    "basic": {
+      "address": "",
+      "age": "",
+      "birthDate": "",
+      "city": "",
+      "email": "",
+      "emergencyContactName": "",
+      "emergencyContactPhone": "",
+      "englishName": "",
+      "gender": "",
+      "github": "",
+      "givenName": "",
+      "height": "",
+      "hukou": "",
+      "hukouType": "",
+      "idNumber": "",
+      "linkedin": "",
+      "maritalStatus": "",
+      "name": "",
+      "nativePlace": "",
+      "phone": "",
+      "politicalStatus": "",
+      "portfolio": "",
+      "qq": "",
+      "surname": "",
+      "wechat": "",
+      "weight": "",
+      "workYears": ""
+    },
+    "campus": [],
+    "careerPreferences": {
+      "developmentGoals": [],
+      "preferredWorkTypes": [],
+      "targetDirections": []
+    },
+    "content": {
+      "careerPlan": {
+        "long": "",
+        "medium": "",
+        "short": ""
+      },
+      "hobbies": {
+        "long": "",
+        "medium": "",
+        "short": ""
+      },
+      "personalAdvantages": {
+        "long": "",
+        "medium": "",
+        "short": ""
+      },
+      "selfEvaluation": {
+        "long": "",
+        "medium": "",
+        "short": ""
+      },
+      "selfIntroduction": {
+        "long": "",
+        "medium": "",
+        "short": ""
+      }
+    },
+    "education": [
+      {
+        "college": "",
+        "degree": "",
+        "degreeType": "",
+        "direction": "",
+        "educationLevel": "",
+        "endDate": "",
+        "gpa": "",
+        "major": "",
+        "rank": "",
+        "school": "",
+        "startDate": ""
+      }
+    ],
+    "internships": [
+      {
+        "achievements": "",
+        "company": "",
+        "department": "",
+        "descriptionLong": "",
+        "descriptionMedium": "",
+        "descriptionShort": "",
+        "endDate": "",
+        "position": "",
+        "responsibilities": "",
+        "startDate": "",
+        "summary": "",
+        "variants": {
+          "agent": "",
+          "aiApplication": "",
+          "aiOperation": "",
+          "aiProduct": "",
+          "aiSolution": "",
+          "aigcMarketing": ""
+        },
+        "workContent": ""
+      }
+    ],
+    "jobPreferences": {
+      "acceptBusinessTrip": "",
+      "acceptOfflineInterview": "",
+      "acceptOnlineInterview": "",
+      "acceptOvertime": "",
+      "acceptRelocation": "",
+      "availableDate": "",
+      "employmentType": "",
+      "expectedCity": [],
+      "expectedIndustry": "",
+      "expectedPosition": [],
+      "expectedSalary": ""
+    },
+    "projects": [
+      {
+        "achievements": "",
+        "background": "",
+        "descriptionLong": "",
+        "descriptionMedium": "",
+        "descriptionShort": "",
+        "endDate": "",
+        "keywords": [],
+        "name": "",
+        "responsibilities": "",
+        "role": "",
+        "startDate": "",
+        "summary": "",
+        "variants": {
+          "agent": "",
+          "aiApplication": "",
+          "aiOperation": "",
+          "aiProduct": "",
+          "aiSolution": "",
+          "aigcMarketing": ""
+        },
+        "workContent": ""
+      }
+    ],
+    "sensitive": {
+      "emergencyContact": "",
+      "idNumber": "",
+      "maritalStatus": "",
+      "politicalStatus": ""
+    },
+    "skills": {
+      "awards": [],
+      "certificates": [],
+      "languages": [],
+      "technical": [],
+      "tools": []
+    }
+  },
+  "afa.profiles.v2": {
+    "activeLibraryId": "lib_muwnihzl_f2wjsle6",
+    "libraries": [
+      {
+        "content": {
+          "campus": [],
+          "careerPreferences": {
+            "developmentGoals": [],
+            "preferredWorkTypes": [],
+            "targetDirections": []
+          },
+          "content": {
+            "careerPlan": {
+              "long": "",
+              "medium": "",
+              "short": ""
+            },
+            "hobbies": {
+              "long": "",
+              "medium": "",
+              "short": ""
+            },
+            "personalAdvantages": {
+              "long": "",
+              "medium": "",
+              "short": ""
+            },
+            "selfEvaluation": {
+              "long": "",
+              "medium": "",
+              "short": ""
+            },
+            "selfIntroduction": {
+              "long": "",
+              "medium": "",
+              "short": ""
+            }
+          },
+          "internships": [
+            {
+              "achievements": "",
+              "company": "",
+              "department": "",
+              "descriptionLong": "",
+              "descriptionMedium": "",
+              "descriptionShort": "",
+              "endDate": "",
+              "position": "",
+              "responsibilities": "",
+              "startDate": "",
+              "summary": "",
+              "variants": {
+                "agent": "",
+                "aiApplication": "",
+                "aiOperation": "",
+                "aiProduct": "",
+                "aiSolution": "",
+                "aigcMarketing": ""
+              },
+              "workContent": ""
+            }
+          ],
+          "jobPreferences": {
+            "acceptBusinessTrip": "",
+            "acceptOfflineInterview": "",
+            "acceptOnlineInterview": "",
+            "acceptOvertime": "",
+            "acceptRelocation": "",
+            "availableDate": "",
+            "employmentType": "",
+            "expectedCity": [],
+            "expectedIndustry": "",
+            "expectedPosition": [],
+            "expectedSalary": ""
+          },
+          "projects": [
+            {
+              "achievements": "",
+              "background": "",
+              "descriptionLong": "",
+              "descriptionMedium": "",
+              "descriptionShort": "",
+              "endDate": "",
+              "keywords": [],
+              "name": "",
+              "responsibilities": "",
+              "role": "",
+              "startDate": "",
+              "summary": "",
+              "variants": {
+                "agent": "",
+                "aiApplication": "",
+                "aiOperation": "",
+                "aiProduct": "",
+                "aiSolution": "",
+                "aigcMarketing": ""
+              },
+              "workContent": ""
+            }
+          ],
+          "skills": {
+            "awards": [],
+            "certificates": [],
+            "languages": [],
+            "technical": [],
+            "tools": []
+          }
+        },
+        "createdAt": "2026-10-06T12:24:52.113Z",
+        "directions": [],
+        "id": "lib_muwnihzl_f2wjsle6",
+        "name": "默认资料库",
+        "note": "",
+        "updatedAt": "2026-10-06T12:24:52.113Z"
+      }
+    ],
+    "schemaVersion": 2,
+    "shared": {
+      "basic": {
+        "address": "",
+        "age": "",
+        "birthDate": "",
+        "city": "",
+        "email": "",
+        "emergencyContactName": "",
+        "emergencyContactPhone": "",
+        "englishName": "",
+        "gender": "",
+        "github": "",
+        "givenName": "",
+        "height": "",
+        "hukou": "",
+        "hukouType": "",
+        "idNumber": "",
+        "linkedin": "",
+        "maritalStatus": "",
+        "name": "",
+        "nativePlace": "",
+        "phone": "",
+        "politicalStatus": "",
+        "portfolio": "",
+        "qq": "",
+        "surname": "",
+        "wechat": "",
+        "weight": "",
+        "workYears": ""
+      },
+      "education": [
+        {
+          "college": "",
+          "degree": "",
+          "degreeType": "",
+          "direction": "",
+          "educationLevel": "",
+          "endDate": "",
+          "gpa": "",
+          "major": "",
+          "rank": "",
+          "school": "",
+          "startDate": ""
+        }
+      ],
+      "sensitive": {
+        "emergencyContact": "",
+        "idNumber": "",
+        "maritalStatus": "",
+        "politicalStatus": ""
+      }
+    }
+  }
+}

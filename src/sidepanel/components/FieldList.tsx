@@ -8,7 +8,6 @@ export interface FieldListProps {
   devMode: boolean;
   onToggleConfirm: (reference: string) => void;
   onEditValue: (reference: string, value: string) => void;
-  onVariantChange: (reference: string, variant: "short" | "medium" | "long") => void;
   onIgnore: (reference: string) => void;
   onUnignore?: (reference: string) => void;
   onSwitchField?: (reference: string, fieldId: string) => void;
@@ -104,7 +103,6 @@ export function FieldList(props: FieldListProps) {
         compact={isCompact(c)}
         onToggleConfirm={props.onToggleConfirm}
         onEditValue={props.onEditValue}
-        onVariantChange={props.onVariantChange}
         onIgnore={props.onIgnore}
         onUnignore={props.onUnignore}
         onSwitchField={props.onSwitchField}

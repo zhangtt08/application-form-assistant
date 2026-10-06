@@ -445,9 +445,7 @@ export function ProfileEditor({
             <TextareaInput label="工作内容" value={it.workContent} onChange={(v) => set((p) => (p.internships[i]!.workContent = v))} />
             <TextareaInput label="工作业绩" value={it.achievements} onChange={(v) => set((p) => (p.internships[i]!.achievements = v))} />
             <TextareaInput label="总结/收获" value={it.summary} onChange={(v) => set((p) => (p.internships[i]!.summary = v))} />
-            <TextareaInput label="描述-短" value={it.descriptionShort} onChange={(v) => set((p) => (p.internships[i]!.descriptionShort = v))} />
-            <TextareaInput label="描述-中" value={it.descriptionMedium} onChange={(v) => set((p) => (p.internships[i]!.descriptionMedium = v))} />
-            <TextareaInput label="描述-长" value={it.descriptionLong} onChange={(v) => set((p) => (p.internships[i]!.descriptionLong = v))} />
+            <TextareaInput label="描述" value={it.description} onChange={(v) => set((p) => (p.internships[i]!.description = v))} />
             <VariantsInput
               variants={it.variants}
               onChange={(k, v) => set((p) => { p.internships[i]!.variants[k] = v; })}
@@ -463,7 +461,7 @@ export function ProfileEditor({
             set((p) =>
               p.internships.push({
                 company: "", department: "", position: "", startDate: "", endDate: "",
-                descriptionShort: "", descriptionMedium: "", descriptionLong: "",
+                description: "",
                 responsibilities: "", workContent: "", achievements: "", summary: "",
                 variants: { agent: "", aiApplication: "", aiProduct: "", aiOperation: "", aiSolution: "", aigcMarketing: "" },
               }),
@@ -496,9 +494,7 @@ export function ProfileEditor({
             <TextareaInput label="工作内容" value={cp.workContent} onChange={(v) => set((p) => (p.campus[i]!.workContent = v))} />
             <TextareaInput label="工作业绩" value={cp.achievements} onChange={(v) => set((p) => (p.campus[i]!.achievements = v))} />
             <TextareaInput label="总结/收获" value={cp.summary} onChange={(v) => set((p) => (p.campus[i]!.summary = v))} />
-            <TextareaInput label="描述-短" value={cp.descriptionShort} onChange={(v) => set((p) => (p.campus[i]!.descriptionShort = v))} />
-            <TextareaInput label="描述-中" value={cp.descriptionMedium} onChange={(v) => set((p) => (p.campus[i]!.descriptionMedium = v))} />
-            <TextareaInput label="描述-长" value={cp.descriptionLong} onChange={(v) => set((p) => (p.campus[i]!.descriptionLong = v))} />
+            <TextareaInput label="描述" value={cp.description} onChange={(v) => set((p) => (p.campus[i]!.description = v))} />
             <VariantsInput
               variants={cp.variants}
               onChange={(k, v) => set((p) => { p.campus[i]!.variants[k] = v; })}
@@ -514,7 +510,7 @@ export function ProfileEditor({
             set((p) =>
               p.campus.push({
                 organization: "", department: "", position: "", startDate: "", endDate: "",
-                descriptionShort: "", descriptionMedium: "", descriptionLong: "",
+                description: "",
                 responsibilities: "", workContent: "", achievements: "", summary: "",
                 variants: { agent: "", aiApplication: "", aiProduct: "", aiOperation: "", aiSolution: "", aigcMarketing: "" },
               }),
@@ -545,9 +541,7 @@ export function ProfileEditor({
             <TextareaInput label="项目内容" value={pj.workContent} onChange={(v) => set((p) => (p.projects[i]!.workContent = v))} />
             <TextareaInput label="项目成果" value={pj.achievements} onChange={(v) => set((p) => (p.projects[i]!.achievements = v))} />
             <TextareaInput label="项目概述/总结" value={pj.summary} onChange={(v) => set((p) => (p.projects[i]!.summary = v))} />
-            <TextareaInput label="描述-短" value={pj.descriptionShort} onChange={(v) => set((p) => (p.projects[i]!.descriptionShort = v))} />
-            <TextareaInput label="描述-中" value={pj.descriptionMedium} onChange={(v) => set((p) => (p.projects[i]!.descriptionMedium = v))} />
-            <TextareaInput label="描述-长" value={pj.descriptionLong} onChange={(v) => set((p) => (p.projects[i]!.descriptionLong = v))} />
+            <TextareaInput label="描述" value={pj.description} onChange={(v) => set((p) => (p.projects[i]!.description = v))} />
             <VariantsInput
               variants={pj.variants}
               onChange={(k, v) => set((p) => { p.projects[i]!.variants[k] = v; })}
@@ -563,7 +557,7 @@ export function ProfileEditor({
             set((p) =>
               p.projects.push({
                 name: "", role: "", startDate: "", endDate: "",
-                descriptionShort: "", descriptionMedium: "", descriptionLong: "", keywords: [],
+                description: "", keywords: [],
                 background: "", responsibilities: "", workContent: "", achievements: "", summary: "",
                 variants: { agent: "", aiApplication: "", aiProduct: "", aiOperation: "", aiSolution: "", aigcMarketing: "" },
               }),
@@ -601,7 +595,7 @@ export function ProfileEditor({
 
       <details>
         <summary>常用文本</summary>
-        <p className="muted small">短（≤120字）/ 中（121-350字）/ 长（&gt;350字）。页面上按 maxlength 自动选择。</p>
+        <p className="muted small">表单上的自我介绍、自我评价等开放栏会按这里的内容填写。</p>
         {(["selfIntroduction", "selfEvaluation", "personalAdvantages", "careerPlan", "hobbies"] as const).map((key) => (
           <div className="pe-entry" key={key}>
             <div className="pe-entry-head">
@@ -613,9 +607,7 @@ export function ProfileEditor({
                 hobbies: "兴趣爱好",
               }[key]}
             </div>
-            <TextareaInput label="短" value={draft.content[key].short} onChange={(v) => set((p) => (p.content[key].short = v))} rows={2} />
-            <TextareaInput label="中" value={draft.content[key].medium} onChange={(v) => set((p) => (p.content[key].medium = v))} rows={3} />
-            <TextareaInput label="长" value={draft.content[key].long} onChange={(v) => set((p) => (p.content[key].long = v))} rows={4} />
+            <TextareaInput label="内容" value={draft.content[key]} onChange={(v) => set((p) => (p.content[key] = v))} rows={4} />
           </div>
         ))}
       </details>

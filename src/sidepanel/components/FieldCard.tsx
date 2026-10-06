@@ -5,7 +5,6 @@ import { ConfidenceBadge } from "./ConfidenceBadge";
 import {
   explainCandidate,
   fieldFullLabel,
-  getCanonicalFieldDef,
   LEVEL_TEXT,
   type MatchExplanation,
 } from "../../core";
@@ -22,7 +21,6 @@ export interface FieldCardProps {
   compact?: boolean;
   onToggleConfirm: (reference: string) => void;
   onEditValue: (reference: string, value: string) => void;
-  onVariantChange: (reference: string, variant: "short" | "medium" | "long") => void;
   onIgnore: (reference: string) => void;
   /** 撤销跳过：回到跳过前的状态（否则用户点错了只能整页重识别） */
   onUnignore?: (reference: string) => void;
@@ -261,7 +259,6 @@ export function FieldCard(props: FieldCardProps) {
   const isReviewEditable =
     (status === "need-confirm" || status === "ready" || status === "filled") && candidate.value?.editable === true;
   const displayValue = candidate.editedValue ?? candidate.value?.value ?? "";
-  const def = match.fieldId !== "unknown" ? getCanonicalFieldDef(match.fieldId) : undefined;
   const manualLike = status === "manual" || status === "unsupported";
   const sourceBadge = sourceBadgeText(candidate);
 
@@ -299,12 +296,6 @@ export function FieldCard(props: FieldCardProps) {
         : status === "ready" || status === "filled"
           ? "field-card card-safe"
           : "field-card card-muted";
-
-  const handleVariant = (variant: string) => {
-    if (variant === "short" || variant === "medium" || variant === "long") {
-      props.onVariantChange(raw.reference, variant);
-    }
-  };
 
   // 紧凑一行：已按资料库填好的客观信息只需要「哪个字段、填了什么、内容从哪来」。
   // 点开才看完整卡片（编辑、定位、调试信息）。
@@ -428,23 +419,6 @@ export function FieldCard(props: FieldCardProps) {
                 </>
               )}
             </div>
-
-            {def?.variants && candidate.value?.editable && (
-              <div className="field-row">
-                <span className="field-k">版本</span>
-                <select
-                  className="variant-select"
-                  aria-label="选择这段内容的长度版本"
-                  value={candidate.value.variant}
-                  onChange={(e) => handleVariant(e.target.value)}
-                >
-                  <option value="short">短（≤120字）</option>
-                  <option value="medium">中（121-350字）</option>
-                  <option value="long">长（&gt;350字）</option>
-                </select>
-                <span className="muted small">{displayValue.length} 字</span>
-              </div>
-            )}
 
             {candidate.value?.fallbackUsed && (
               <div className="fallback-warning">

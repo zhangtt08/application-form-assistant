@@ -1,5 +1,3 @@
-import type { ValueVariant } from "./field";
-
 export interface BasicProfile {
   name: string;
   englishName: string;
@@ -61,7 +59,7 @@ export interface EducationEntry {
 
 /**
  * 经历的岗位方向变体（spec 第四章：facts 事实层 + variants 表达层）。
- * facts = 描述短中长/职责/内容/业绩等事实性字段，不随岗位改变；
+ * facts = 描述/职责/内容/业绩等事实性字段，不随岗位改变；
  * variants = 面向不同岗位方向的「这条经历怎么讲」表达版本。
  * 任何变体都不允许制造不存在的经历、数字、技能或结果。
  */
@@ -96,9 +94,8 @@ export interface InternshipEntry {
   position: string;
   startDate: string;
   endDate: string;
-  descriptionShort: string;
-  descriptionMedium: string;
-  descriptionLong: string;
+  /** 经历描述（表单「实习描述/工作描述」栏的默认来源；按岗位方向的版本见 variants） */
+  description: string;
   /** 语义槽位：工作职责（对应表单「工作职责/岗位职责」栏） */
   responsibilities: string;
   /** 语义槽位：工作内容（对应「工作内容/主要工作」栏） */
@@ -118,9 +115,7 @@ export interface CampusExperienceEntry {
   position: string;
   startDate: string;
   endDate: string;
-  descriptionShort: string;
-  descriptionMedium: string;
-  descriptionLong: string;
+  description: string;
   responsibilities: string;
   workContent: string;
   achievements: string;
@@ -133,9 +128,7 @@ export interface ProjectEntry {
   role: string;
   startDate: string;
   endDate: string;
-  descriptionShort: string;
-  descriptionMedium: string;
-  descriptionLong: string;
+  description: string;
   keywords: string[];
   /** 语义槽位：项目背景 */
   background: string;
@@ -188,18 +181,12 @@ export const YES_NO_PREFERENCE_KEYS = [
 
 export type YesNoPreferenceKey = (typeof YES_NO_PREFERENCE_KEYS)[number];
 
-export interface LongTextBlock {
-  short: string;
-  medium: string;
-  long: string;
-}
-
 export interface ContentProfile {
-  selfIntroduction: LongTextBlock;
-  selfEvaluation: LongTextBlock;
-  personalAdvantages: LongTextBlock;
-  careerPlan: LongTextBlock;
-  hobbies: LongTextBlock;
+  selfIntroduction: string;
+  selfEvaluation: string;
+  personalAdvantages: string;
+  careerPlan: string;
+  hobbies: string;
 }
 
 /** 敏感字段：Risk Engine 恒为 MANUAL_ONLY，扩展绝不写入 */
@@ -243,6 +230,4 @@ export interface CanonicalFieldDef {
   group: "basic" | "education" | "internship" | "campus" | "project" | "skills" | "job" | "content";
   /** 是否多条目（education/internship/campus/project） */
   multiEntry: boolean;
-  /** 开放文本字段支持 short/medium/long 变体 */
-  variants?: ValueVariant[];
 }

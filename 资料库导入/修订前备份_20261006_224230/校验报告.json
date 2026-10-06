@@ -1,0 +1,36 @@
+{
+  "verifiedAt": "2026-10-06T13:03:52.622Z",
+  "extensionStorageReadback": true,
+  "libraries": [
+    {
+      "name": "AI 应用｜业务自动化｜解决方案",
+      "projects": 5,
+      "internships": 3,
+      "campus": 2,
+      "schema": true,
+      "routing": true,
+      "numbered": true,
+      "readShapePreserved": true
+    },
+    {
+      "name": "AIGC 创作｜视觉内容｜创作工具",
+      "projects": 4,
+      "internships": 3,
+      "campus": 2,
+      "schema": true,
+      "routing": true,
+      "numbered": true,
+      "readShapePreserved": true
+    },
+    {
+      "name": "AI 运营｜产品运营｜SEO / GEO",
+      "projects": 4,
+      "internships": 3,
+      "campus": 2,
+      "schema": true,
+      "routing": true,
+      "numbered": true,
+      "readShapePreserved": true
+    }
+  ]
+}

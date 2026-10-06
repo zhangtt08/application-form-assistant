@@ -60,25 +60,21 @@ function checkBasic(v: unknown, errors: string[]): BasicProfileShape {
   return out as unknown as BasicProfileShape;
 }
 
-function checkLongTextBlock(
-  v: unknown,
-  name: string,
-  errors: string[],
-  optional = false,
-): Record<string, string> {
-  const out = { short: "", medium: "", long: "" };
-  if (v === undefined && optional) return out; // 旧版缺失 → 默认空块
-  if (!isRecord(v)) {
-    errors.push(`${name} 必须是对象`);
-    return out;
+/**
+ * 常用文本块：新版为单个 string；旧版 {short,medium,long} → 取内容最全的一段迁移。
+ */
+function checkTextBlock(v: unknown, name: string, errors: string[], optional = false): string {
+  if (v === undefined && optional) return ""; // 旧版缺失 → 默认空
+  if (typeof v === "string") return v;
+  if (isRecord(v)) {
+    // 旧版三段块：long 在旧导入逻辑里是内容最全的一段，依次回退
+    for (const key of ["long", "medium", "short"] as const) {
+      if (typeof v[key] === "string" && v[key]) return v[key];
+    }
+    return "";
   }
-  for (const key of ["short", "medium", "long"] as const) {
-    const val = v[key];
-    if (typeof val === "string") out[key] = val;
-    else if (val === undefined && optional) out[key] = "";
-    else errors.push(`${name}.${key} 必须是 string`);
-  }
-  return out;
+  errors.push(`${name} 必须是 string`);
+  return "";
 }
 
 function checkStringArray(
@@ -122,6 +118,27 @@ function checkEducation(v: unknown, errors: string[]): EducationEntry[] {
 
 /** v1.2 增量语义槽位：旧版条目缺失 → 补默认 ""；存在但类型错仍拒绝 */
 const EXPERIENCE_KEYS_OPTIONAL = ["responsibilities", "workContent", "achievements", "summary", "background"];
+
+/**
+ * 描述统一为单个 description（旧版为 descriptionShort/Medium/Long 三段）：
+ * 新键缺失时从旧三段迁移（取内容最全的 long，依次回退），避免升级丢内容。
+ */
+function normalizeDescription(item: Record<string, unknown>, name: string, i: number, errors: string[]): void {
+  const val = item.description;
+  if (typeof val === "string") return;
+  if (val === undefined) {
+    for (const key of ["descriptionLong", "descriptionMedium", "descriptionShort"] as const) {
+      const old = item[key];
+      if (typeof old === "string" && old) {
+        item.description = old;
+        return;
+      }
+    }
+    item.description = "";
+    return;
+  }
+  errors.push(`${name}[${i}].description 必须是 string`);
+}
 
 /**
  * v2.0 岗位方向变体（表达层）：旧版条目整块缺失 → 补全空变体（向后兼容）；
@@ -171,14 +188,11 @@ function checkExperienceEntries(
       if (val === undefined) (item as Record<string, unknown>)[k] = ""; // 旧版条目补默认
       else if (typeof val !== "string") errors.push(`${name}[${i}].${k} 必须是 string`);
     }
+    normalizeDescription(item as Record<string, unknown>, name, i, errors);
     normalizeVariants(item as Record<string, unknown>, name, i, errors);
     return item as unknown as Record<string, string>;
   });
 }
-
-const EXPERIENCE_KEYS = [
-  "descriptionShort", "descriptionMedium", "descriptionLong",
-];
 
 function checkProjects(v: unknown, errors: string[]): ProjectEntry[] {
   if (!Array.isArray(v)) {
@@ -191,7 +205,7 @@ function checkProjects(v: unknown, errors: string[]): ProjectEntry[] {
       return null as unknown as ProjectEntry;
     }
     const keys: (keyof ProjectEntry)[] = [
-      "name", "role", "startDate", "endDate", "descriptionShort", "descriptionMedium", "descriptionLong",
+      "name", "role", "startDate", "endDate",
     ];
     for (const k of keys) {
       if (typeof item[k] !== "string") errors.push(`projects[${i}].${k} 必须是 string`);
@@ -201,6 +215,7 @@ function checkProjects(v: unknown, errors: string[]): ProjectEntry[] {
       if (val === undefined) (item as Record<string, unknown>)[k] = ""; // 旧版条目补默认
       else if (typeof val !== "string") errors.push(`projects[${i}].${k} 必须是 string`);
     }
+    normalizeDescription(item as Record<string, unknown>, "projects", i, errors);
     normalizeVariants(item as Record<string, unknown>, "projects", i, errors);
     if (!Array.isArray(item.keywords)) errors.push(`projects[${i}].keywords 必须是数组`);
     return item as unknown as ProjectEntry;
@@ -261,20 +276,14 @@ export function validateProfile(input: unknown): ValidationResult {
   let contentOut: ContentProfile;
   if (!isRecord(content)) {
     errors.push("content 必须是对象");
-    contentOut = {
-      selfIntroduction: { short: "", medium: "", long: "" },
-      selfEvaluation: { short: "", medium: "", long: "" },
-      personalAdvantages: { short: "", medium: "", long: "" },
-      careerPlan: { short: "", medium: "", long: "" },
-      hobbies: { short: "", medium: "", long: "" },
-    };
+    contentOut = { selfIntroduction: "", selfEvaluation: "", personalAdvantages: "", careerPlan: "", hobbies: "" };
   } else {
     contentOut = {
-      selfIntroduction: checkLongTextBlock(content.selfIntroduction, "content.selfIntroduction", errors) as unknown as ContentProfile["selfIntroduction"],
-      selfEvaluation: checkLongTextBlock(content.selfEvaluation, "content.selfEvaluation", errors) as unknown as ContentProfile["selfEvaluation"],
-      personalAdvantages: checkLongTextBlock(content.personalAdvantages, "content.personalAdvantages", errors) as unknown as ContentProfile["personalAdvantages"],
-      careerPlan: checkLongTextBlock(content.careerPlan, "content.careerPlan", errors) as unknown as ContentProfile["careerPlan"],
-      hobbies: checkLongTextBlock(content.hobbies, "content.hobbies", errors, true) as unknown as ContentProfile["hobbies"], // 增量字段
+      selfIntroduction: checkTextBlock(content.selfIntroduction, "content.selfIntroduction", errors),
+      selfEvaluation: checkTextBlock(content.selfEvaluation, "content.selfEvaluation", errors),
+      personalAdvantages: checkTextBlock(content.personalAdvantages, "content.personalAdvantages", errors),
+      careerPlan: checkTextBlock(content.careerPlan, "content.careerPlan", errors),
+      hobbies: checkTextBlock(content.hobbies, "content.hobbies", errors, true), // 增量字段
     };
   }
 
@@ -293,7 +302,7 @@ export function validateProfile(input: unknown): ValidationResult {
   const education = checkEducation(input.education, errors);
   const internships = checkExperienceEntries(
     input.internships, "internships", errors,
-    ["company", "department", "position", "startDate", "endDate", ...EXPERIENCE_KEYS],
+    ["company", "department", "position", "startDate", "endDate"],
   ) as unknown as InternshipEntry[];
 
   // campus 为 v1.1 增量板块：整体缺失（旧 Profile）→ 默认空数组；存在则完整校验
@@ -301,7 +310,7 @@ export function validateProfile(input: unknown): ValidationResult {
     ? []
     : checkExperienceEntries(
         input.campus, "campus", errors,
-        ["organization", "department", "position", "startDate", "endDate", ...EXPERIENCE_KEYS],
+        ["organization", "department", "position", "startDate", "endDate"],
       ) as unknown as CampusExperienceEntry[];
 
   const projects = checkProjects(input.projects, errors);

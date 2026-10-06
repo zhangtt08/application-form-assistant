@@ -1,5 +1,5 @@
 import type { ExperienceVariants, Profile } from "../types/profile";
-import type { ResolvedValue, ValueVariant } from "../types/field";
+import type { ResolvedValue } from "../types/field";
 import { VARIANT_KEY_BY_TYPE, type ProfileType } from "../job/profileTypes";
 import type { ProfilePack } from "./pack/types";
 
@@ -15,10 +15,6 @@ import type { ProfilePack } from "./pack/types";
 export interface ResolveOptions {
   /** 多条目字段（教育/实习/项目）取第几条，默认 0 */
   entryIndex?: number;
-  /** 页面 maxlength，决定开放文本用 short/medium/long；null 表示页面无限制 */
-  maxLength?: number | null;
-  /** 直接指定文本变体（预览 UI 切换 short/medium/long 时用），优先于 maxLength 推断 */
-  variantOverride?: "short" | "medium" | "long";
   /** 当前岗位方向（Active Job Context → Profile Router），决定经历表达变体 */
   profileType?: ProfileType;
   /** Stage 6.5：Effective Profile Pack（优先级高于 profileType；只引用不复制事实） */
@@ -37,33 +33,6 @@ const LEGACY_SENSITIVE_SOURCE: Partial<Record<string, keyof Profile["sensitive"]
   maritalStatus: "maritalStatus",
   idNumber: "idNumber",
 };
-
-/** maxlength → 文本变体。无限制默认 medium（与 spec 十一致） */
-export function chooseVariant(maxLength: number | null | undefined): ValueVariant {  if (maxLength == null) return "medium";
-  if (maxLength <= 120) return "short";
-  if (maxLength <= 350) return "medium";
-  return "long";
-}
-
-function effectiveVariant(options: ResolveOptions): ValueVariant {
-  return options.variantOverride ?? chooseVariant(options.maxLength);
-}
-
-/** 资料可能只填写了 medium/short；页面上限很大时不能因 long 为空而丢失已有内容。 */
-function pickDescriptionVariant(
-  entry: { descriptionShort?: string; descriptionMedium?: string; descriptionLong?: string },
-  preferred: ValueVariant,
-): { value: string; variant: "short" | "medium" | "long" } | undefined {
-  const order: ("short" | "medium" | "long")[] =
-    preferred === "short" ? ["short", "medium", "long"] :
-      preferred === "long" ? ["long", "medium", "short"] :
-        ["medium", "long", "short"];
-  for (const key of order) {
-    const value = entry[`description${key.charAt(0).toUpperCase()}${key.slice(1)}` as keyof typeof entry];
-    if (typeof value === "string" && value.trim()) return { value, variant: key };
-  }
-  return undefined;
-}
 
 /**
  * 多条目取第 index 条。
@@ -98,7 +67,6 @@ export function resolveValue(
   }
 
   const entryIdx = options.entryIndex ?? 0;
-  const variant = effectiveVariant(options);
   // Stage 6.5：Pack 的 variantType 优先于 Router profileType（Manual Selection > Router）
   const dirType: ProfileType | undefined = options.pack?.variantType ?? options.profileType;
   // Pack experienceOrder：Entry N → pack 排序后的第 N 个经历（`collection-index` 格式）
@@ -171,16 +139,15 @@ export function resolveValue(
       const dirVariant = variantFor(entry, dirType);
       if (dirVariant) {
         return {
-          fieldId, value: dirVariant.text, variant, editable: true,
+          fieldId, value: dirVariant.text, variant: "plain", editable: true,
           sourceType: "variant", sourcePath: `internships[${entryIdx}].variants.${dirVariant.key}`,
           fallbackUsed: false, profileType: dirType,
           entryIndex: entryIdx, entryCount: profile.internships.length,
         };
       }
-      const picked = pickDescriptionVariant(entry, variant);
-      if (!picked) return undefined;
+      if (!entry.description.trim()) return undefined;
       return {
-        fieldId, value: picked.value, variant: picked.variant, editable: true,
+        fieldId, value: entry.description, variant: "plain", editable: true,
         sourceType: "default", fallbackUsed: Boolean(dirType && dirType !== "general"),
         profileType: dirType,
         entryIndex: entryIdx, entryCount: profile.internships.length,
@@ -200,16 +167,15 @@ export function resolveValue(
       const dirVariant = variantFor(entry, dirType);
       if (dirVariant) {
         return {
-          fieldId, value: dirVariant.text, variant, editable: true,
+          fieldId, value: dirVariant.text, variant: "plain", editable: true,
           sourceType: "variant", sourcePath: `campus[${entryIdx}].variants.${dirVariant.key}`,
           fallbackUsed: false, profileType: dirType,
           entryIndex: entryIdx, entryCount: profile.campus.length,
         };
       }
-      const picked = pickDescriptionVariant(entry, variant);
-      if (!picked) return undefined;
+      if (!entry.description.trim()) return undefined;
       return {
-        fieldId, value: picked.value, variant: picked.variant, editable: true,
+        fieldId, value: entry.description, variant: "plain", editable: true,
         sourceType: "default", fallbackUsed: Boolean(dirType && dirType !== "general"),
         profileType: dirType,
         entryIndex: entryIdx, entryCount: profile.campus.length,
@@ -229,16 +195,15 @@ export function resolveValue(
       const dirVariant = variantFor(entry, dirType);
       if (dirVariant) {
         return {
-          fieldId, value: dirVariant.text, variant, editable: true,
+          fieldId, value: dirVariant.text, variant: "plain", editable: true,
           sourceType: "variant", sourcePath: `projects[${entryIdx}].variants.${dirVariant.key}`,
           fallbackUsed: false, profileType: dirType,
           entryIndex: entryIdx, entryCount: profile.projects.length,
         };
       }
-      const picked = pickDescriptionVariant(entry, variant);
-      if (!picked) return undefined;
+      if (!entry.description.trim()) return undefined;
       return {
-        fieldId, value: picked.value, variant: picked.variant, editable: true,
+        fieldId, value: entry.description, variant: "plain", editable: true,
         sourceType: "default", fallbackUsed: Boolean(dirType && dirType !== "general"),
         profileType: dirType,
         entryIndex: entryIdx, entryCount: profile.projects.length,
@@ -278,23 +243,11 @@ export function resolveValue(
       key === "personalAdvantages" ? packFields?.strengths :
       undefined;
     if (packText && packText.trim()) {
-      return { fieldId, value: packText, variant: variant === "plain" ? "medium" : variant, editable: true, sourceType: "fact", sourcePath: `profilePack(${options.pack?.id}).${key}` };
+      return { fieldId, value: packText, variant: "plain", editable: true, sourceType: "fact", sourcePath: `profilePack(${options.pack?.id}).${key}` };
     }
-    const block = profile.content[key];
-    if (!block) return undefined;
-    const textVariant: "short" | "medium" | "long" =
-      variant === "plain" ? "medium" : variant;
-    // 资料里常常只写了其中一个长度：目标档为空就退到最近的一档，
-    // 否则「用户明明写了个人优势长文，字段却是空的」会表现成少填。
-    const order: Record<"short" | "medium" | "long", ("short" | "medium" | "long")[]> = {
-      short: ["short", "medium", "long"],
-      medium: ["medium", "long", "short"],
-      long: ["long", "medium", "short"],
-    };
-    const pickedVariant = order[textVariant].find((v) => block[v] && block[v].trim());
-    const value = pickedVariant ? block[pickedVariant] : undefined;
-    if (!value) return undefined;
-    return { fieldId, value, variant: pickedVariant!, editable: true, sourceType: "fact" };
+    const text = profile.content[key];
+    if (!text || !text.trim()) return undefined;
+    return { fieldId, value: text, variant: "plain", editable: true, sourceType: "fact" };
   }
 
   return undefined;

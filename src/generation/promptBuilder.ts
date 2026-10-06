@@ -100,7 +100,7 @@ export function buildFactContext(
   }
 
   // result：默认描述概括（仅第一条，避免 prompt 膨胀）
-  const desc = e.descriptionShort || e.descriptionMedium;
+  const desc = e.description;
   if (desc) push("result", desc);
 
   return { experienceId, experienceLabel, facts };

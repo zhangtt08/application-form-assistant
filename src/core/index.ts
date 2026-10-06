@@ -43,7 +43,7 @@ export { classifyApplicationContext } from "../context/applicationContext";
 export { classifyQuestion, QUESTION_INTENT_CONFIG } from "../answering/questionClassifier";
 
 /* ---------- 取值与扫描管线 ---------- */
-export { chooseVariant, resolveValue, type ResolveOptions } from "../profile/profileResolver";
+export { resolveValue, type ResolveOptions } from "../profile/profileResolver";
 export {
   adaptValueToNumberControl,
   applySiteMapping,

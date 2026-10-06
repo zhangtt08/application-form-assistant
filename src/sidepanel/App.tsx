@@ -537,7 +537,6 @@ export default function App() {
           if (!idValid) return c;
           const fresh = resolveValue(c.match.fieldId, profNow, {
             entryIndex: c.entryIndex,
-            maxLength: c.raw.context.maxLength,
             profileType: direction,
           });
           const riskLike = { risk: c.risk, reason: c.riskReason } as RiskAssessment;
@@ -1046,20 +1045,6 @@ export default function App() {
       }),
     );
 
-  const changeVariant = (reference: string, variant: "short" | "medium" | "long") =>
-    setCandidates((prev) =>
-      prev.map((c) => {
-        if (c.raw.reference !== reference || !c.value || !profile) return c;
-        const fresh = resolveValue(c.match.fieldId, profile, {
-          maxLength: c.raw.context.maxLength,
-          entryIndex: c.entryIndex ?? c.value.entryIndex,
-          variantOverride: variant,
-          profileType: effectiveType,
-        });
-        return fresh ? { ...c, value: fresh, editedValue: undefined } : c;
-      }),
-    );
-
   const ignore = (reference: string) =>
     setCandidates((prev) =>
       prev.map((c) =>
@@ -1101,7 +1086,6 @@ export default function App() {
           ? undefined
           : resolveValue(fieldId, profile, {
               entryIndex: c.entryIndex ?? c.value?.entryIndex,
-              maxLength: c.raw.context.maxLength,
               profileType: effectiveType,
             });
       const derived = deriveStatus(c.raw, match, risk, isCanonicalFieldId(fieldId), value);
@@ -1495,7 +1479,6 @@ export default function App() {
                 devMode={prefs.showDev}
                 onToggleConfirm={toggleConfirm}
                 onEditValue={editValue}
-                onVariantChange={changeVariant}
                 onIgnore={ignore}
                 onUnignore={unignore}
                 onSwitchField={switchMatchedField}

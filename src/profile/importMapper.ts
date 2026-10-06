@@ -6,7 +6,6 @@ import type {
   EducationEntry,
   InternshipEntry,
   JobPreferences,
-  LongTextBlock,
   Profile,
   ProjectEntry,
   SkillsProfile,
@@ -18,8 +17,8 @@ import { polarityOf } from "../rules/yesNoAnswers";
  *
  * 支持两种键名风格：
  * - 英文 snake_case/camelCase（basic_info / internships / responsibilities ...）
- * - 中文键名（个人信息 / 实习经历 / 工作职责 ...，描述块为 {短描述,中描述,长描述}，
- *   常用文本块为 {短,中,长}）
+ * - 中文键名（个人信息 / 实习经历 / 工作职责 ...，描述为单段文本，
+ *   兼容旧版 {短描述,中描述,长描述} 与常用文本 {短,中,长} 块）
  *
  * 原则：只搬运简历里明确写了的信息，缺的留空，绝不编造（fail-safe）；
  * 敏感字段（sensitive.*）永远不从外部 JSON 映射，恒为空。
@@ -137,14 +136,18 @@ function firstRec(root: Rec, keys: readonly string[]): Rec {
   return isRec(v) ? v : {};
 }
 
-/** 描述块：中文 {短描述,中描述,长描述} 或英文 {short,medium,long} */
-function pickDesc(e: Rec): { short: string; medium: string; long: string } {
-  const d = isRec(e["描述"]) ? e["描述"] : isRec(e.description) ? e.description : {};
-  return {
-    short: str(d["短描述"] ?? d.short),
-    medium: str(d["中描述"] ?? d.medium),
-    long: str(d["长描述"] ?? d.long),
-  };
+/**
+ * 描述：单段文本（中文「描述」/英文 description，含旧键 descriptionShort/Medium/Long）。
+ * 旧版 {短描述,中描述,长描述} / {short,medium,long} 块 → 取内容最全的一段迁移。
+ */
+function pickDesc(e: Rec): string {
+  const direct = e["描述"] ?? e.description;
+  if (typeof direct === "string") return str(direct);
+  if (typeof e.descriptionShort === "string" || typeof e.descriptionMedium === "string" || typeof e.descriptionLong === "string") {
+    return str(e.descriptionLong) || str(e.descriptionMedium) || str(e.descriptionShort);
+  }
+  const d = isRec(direct) ? direct : {};
+  return str(d["长描述"] ?? d.long) || str(d["中描述"] ?? d.medium) || str(d["短描述"] ?? d.short);
 }
 
 const SECTION_LABELS: Record<string, string> = {
@@ -188,13 +191,13 @@ function composeSections(entry: Rec, skip: Set<string>): string {
 const INTERNSHIP_SKIP = new Set([
   "company", "department", "position",
   "start_date", "startDate", "end_date", "endDate",
-  "descriptionShort", "descriptionMedium", "descriptionLong",
+  "描述", "description", "descriptionShort", "descriptionMedium", "descriptionLong",
 ]);
 
 const CAMPUS_SKIP = new Set([
   "organization", "department", "position",
   "start_date", "startDate", "end_date", "endDate",
-  "descriptionShort", "descriptionMedium", "descriptionLong",
+  "描述", "description", "descriptionShort", "descriptionMedium", "descriptionLong",
 ]);
 
 function mapCampus(v: unknown): CampusExperienceEntry[] {
